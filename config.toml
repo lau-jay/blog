@@ -22,4 +22,4 @@ googleAnalytics = ""
 [params]
   tagline = "每个人获得的东西都恰好是他值得获得的东西"
   customCSS = []
-
+  favicon = "/img/favicon.ico"
