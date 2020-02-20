@@ -1,4 +1,0 @@
-+++
-menu = "main"
-meta = false
-+++
