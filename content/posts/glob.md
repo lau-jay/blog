@@ -1,10 +1,9 @@
 +++
 title = "glob"
 date = 2016-11-27T19:24:16+08:00
-categories =  []
-tags = []
+categories =  ["python"]
+tags = ["stdlib"]
 draft = false
-images = []
 +++
 
 ## glob module
@@ -15,7 +14,7 @@ glob通过匹配来查找文件，该模块暴露出来三个函数glob, iglob, 
   例如:
   *匹配所有
   ?匹配一个字符
-  ```
+  ```python
   import glob
   glob.glob('*') # 返回当前目录下所有的文件
   glob.glob('?.*') #返回所有文件名是一个字符的文件

@@ -1,9 +1,12 @@
 baseURL = "https://laujay.com/"
 languageCode = "zh-CN"
 title = "世界的过客"
-theme = "hugo-kiera"
+canonifyurls = true
 
-paginate = 3
+theme = "hugo-kiera"
+copyright = "Copyright &copy; 2016 ~ 2020 - Jay Lau"
+
+paginate = 10
 
 summaryLength = 3
 enableEmoji = true
