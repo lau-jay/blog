@@ -1,0 +1,22 @@
+baseURL = "http://example.org/"
+languageCode = "zh-CN"
+title = "世界的过客"
+theme = "hugo-kiera"
+
+paginate = 3
+
+summaryLength = 3
+enableEmoji = true
+pygmentsCodeFences = true
+
+disqusShortname = ""
+googleAnalytics = ""
+
+[author]
+  name = "Jay Lau"
+  github = "https://github.com/lau-jay"
+
+[params]
+  tagline = "每个人获得的东西都恰好是他值得获得的东西"
+  customCSS = []
+
