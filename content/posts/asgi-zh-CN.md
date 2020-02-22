@@ -2,7 +2,7 @@
 title = "ASGI规范中文版"
 date = 2018-10-17T07:00:39+08:00
 images = []
-tags = []
+tags = ["translation"]
 categories = ["python"]
 draft = false
 +++
