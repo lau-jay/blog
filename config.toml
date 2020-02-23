@@ -13,7 +13,7 @@ enableEmoji = true
 pygmentsCodeFences = true
 
 disqusShortname = ""
-googleAnalytics = ""
+googleAnalytics = "UA-91611718-2"
 
 [author]
   name = "Jay Lau"
