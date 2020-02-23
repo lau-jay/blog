@@ -6,7 +6,7 @@ canonifyurls = true
 theme = "hugo-kiera"
 copyright = "Copyright &copy; 2016 ~ 2020 - Jay Lau"
 
-paginate = 100
+paginate = 10
 
 summaryLength = 3
 enableEmoji = true
@@ -23,3 +23,17 @@ googleAnalytics = ""
   tagline = "每个人获得的东西都恰好是他值得获得的东西"
   customCSS = []
   favicon = "/img/favicon.ico"
+
+# uncomment to enable the Tags link on the main toolbar
+[[menu.main]]
+  identifier = "tags"
+  name = "Tags"
+  url = "/tags"
+  weight = 1
+
+# uncomment to enable the Categories link on the main toolbar
+[[menu.main]]
+  identifier = "categories"
+  name = "Categories"
+  url = "/categories"
+  weight = 1
