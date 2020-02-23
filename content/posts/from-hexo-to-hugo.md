@@ -110,7 +110,7 @@ public 是最后生成的静态文件所在目录，把它跟要放的存储库�
 在Travis CI(网址是travis-ci.org)上，用GitHub主账号登陆，找到blog这个存储库。
 找到设置有个叫`environments`的地方,
 添加一个名为的`GITHUB_AUTH_SECRET`环境变量。
-使用新创建的GitHub帐户的用户名和密码将值设置为https://<user>:<password>@github.com
+使用新创建的GitHub帐户的用户名和密码将值设置为https://user:password@github.com
 
 在本地blog库的目录下添加文件名为`.travis.yml` 的配置文件来配置Travis CI 。
 
