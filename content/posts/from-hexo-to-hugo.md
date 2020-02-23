@@ -36,7 +36,7 @@ draft = false
 因此你需要为机器人帐户使用单独的电子邮件地址。
 在这种情况下，一种有用的技术是子地址寻址（也称为plus addressing）：
 
-    附加+blog-bot到电子邮件地址的@标志前的部分，那么发送到该地址的邮件将传递到`+`号前的收件箱中。
+    附加+blog-bot到电子邮件地址的@标志前的部分，那么发送到该地址的邮件将传递到+号前的收件箱中。
 
 设置好了后到username.github.io的setting里加为协作者
 
@@ -46,22 +46,22 @@ mac OSX `brew install hugo`
 
 ## 设置博客库
 在你的电脑上 `hugo new site blog`
-```bash
+
     cd blog
 
     git init
     git add .
     git commit -m "Initial commit"
-```
+
 然后 `git remote add https://github.com/username/blog.git`
 接着
-```bash
+
     git submodule add \
         https://github.com/budparr/gohugo-theme-ananke.git \
         themes/ananke
     git add .
     git commit -m "Add submodule themes/ananke"
-```
+
 这里我简单选择hugo入门里推荐的这个主题, 你可以自己换个。
 最后 `git psuh -u origin master`
 
@@ -81,12 +81,11 @@ mac OSX `brew install hugo`
 ## 链接部署库
 还是blog目录下:
 
-```bash
     git submodule add \
         https://github.com/username/username.github.io.git \
         public
     git commit -am "Add submodule public"
-```
+
 public 是最后生成的静态文件所在目录，把它跟要放的存储库关联，那么之后生成好了。
 只要进这个目录`git push origin master`就会把网站部署好了
 
@@ -122,48 +121,45 @@ blog存储库的持续集成需要执行三个任务：
 第三步委托给Shell脚本，这是下一部分的主题。
 
 创建.travis.yml具有以下内容的文件：
-```yaml
----
-install:
-  - curl -LO https://github.com/gohugoio/hugo/releases/download/v0.64.1/hugo_0.64.1_Linux-64bit.deb
-  - sudo dpkg -i hugo_0.64.1_Linux-64bit.deb
 
-script:
-  - hugo
+    ---
+    install:
+      - curl -LO https://github.com/gohugoio/hugo/releases/download/v0.64.1/hugo_0.64.1_Linux-64bit.deb
+      - sudo dpkg -i hugo_0.64.1_Linux-64bit.deb
 
-deploy:
-  - provider: script
-    script: bash deploy.sh
-    skip_cleanup: true
-    on:
-      branch: master
-```
+    script:
+      - hugo
+
+    deploy:
+      - provider: script
+        script: bash deploy.sh
+        skip_cleanup: true
+        on:
+          branch: master
 
 ## 添加部署脚本
 在blog存储库中创建脚本，记得把下面的username替换为你的GitHub用户名：
 
-```bash
-#!/bin/bash
+    #!/bin/bash
 
-echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
+    echo -e "\033[0;32mDeploying updates to GitHub...\033[0m"
 
-cd public
+    cd public
 
-if [ -n "$GITHUB_AUTH_SECRET" ]
-then
-    touch ~/.git-credentials
-    chmod 0600 ~/.git-credentials
-    echo $GITHUB_AUTH_SECRET > ~/.git-credentials
+    if [ -n "$GITHUB_AUTH_SECRET" ]
+    then
+        touch ~/.git-credentials
+        chmod 0600 ~/.git-credentials
+        echo $GITHUB_AUTH_SECRET > ~/.git-credentials
 
-    git config credential.helper store
-    git config user.email "username-blog-bot@users.noreply.github.com"
-    git config user.name "username-blog-bot"
-fi
+        git config credential.helper store
+        git config user.email "username-blog-bot@users.noreply.github.com"
+        git config user.name "username-blog-bot"
+    fi
 
-git add .
-git commit -m "Rebuild site"
-git push --force origin HEAD:master
-```
+    git add .
+    git commit -m "Rebuild site"
+    git push --force origin HEAD:master
 
 ## 最后
 
