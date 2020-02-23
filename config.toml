@@ -6,7 +6,7 @@ canonifyurls = true
 theme = "hugo-kiera"
 copyright = "Copyright &copy; 2016 ~ 2020 - Jay Lau"
 
-paginate = 10
+paginate = 100
 
 summaryLength = 3
 enableEmoji = true
