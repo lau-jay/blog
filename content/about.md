@@ -8,6 +8,8 @@ draft = false
 
 后端工程师，Python忠粉，VIM党，喜欢有趣的事物。
 
+[digitalocean](https://m.do.co/c/f803eaf1ddc4)
+
 
 
 
