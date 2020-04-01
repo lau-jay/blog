@@ -1,5 +1,5 @@
 +++
-title = "Pyenv Guide on Osx"
+title = "Pyenv Guide on OSX"
 date = 2020-04-01T11:29:34+08:00
 images = []
 tags = ["pyenv"]
