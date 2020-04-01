@@ -7,7 +7,7 @@ categories = ["tool"]
 draft = false
 +++
 
-> 好久不用。。发现都忘记怎么用了。赶紧把笔记放博客上
+> 好久不用。。发现都忘记怎么用了。赶紧写个笔记
 
 #  Mac OSX Python开发环境配置之 pyenv
 
@@ -35,7 +35,7 @@ eval "$(pyenv init -)"
 eval "$(pyenv virtualenv-init -)"
 ```
 
-然后执行 
+然后执行
 
 ```shell
 $ source ~./bashrc # 如果是zsh就是~./zshrc 让当前环境变量生效
@@ -44,7 +44,7 @@ $ source ~./bashrc # 如果是zsh就是~./zshrc 让当前环境变量生效
 用法：
 
 ```shell
-$ pyenv install 2.7.16 
+$ pyenv install 2.7.16
 $ pyenv versions
   system
   2.7.16
