@@ -24,6 +24,7 @@ googleAnalytics = "UA-91611718-2"
   customCSS = []
   favicon = "/img/favicon.ico"
   homepageLength = 100
+  commentAutoload = true
 
 # uncomment to enable the Tags link on the main toolbar
 [[menu.main]]
