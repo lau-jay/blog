@@ -12,7 +12,7 @@ draft = false
 
 首先，我没有认真研究为啥找不到包，但是加了`__init__.py`在tests目录就能够正常pytest命令跑完测试。也就是说我是不知道原因的情况下，误打误撞利用的pytest的机制。
 
-为了高清这个问题我认真阅读了[该章](https://docs.pytest.org/en/latest/goodpractices.html#tests-outside-application-code) 发现了如下的文字:
+为了搞清这个问题我认真阅读了[该章](https://docs.pytest.org/en/latest/goodpractices.html#tests-outside-application-code) 发现了如下的文字:
 
 >```
 >setup.py
