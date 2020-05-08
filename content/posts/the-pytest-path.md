@@ -30,7 +30,7 @@ draft = false
 >
 >But now this introduces a subtle problem: in order to load the test modules from the `tests` directory, pytest prepends the root of the repository to `sys.path`, which adds the side-effect that now `mypkg` is also importable.This is problematic if you are using a tool like [tox](https://docs.pytest.org/en/latest/goodpractices.html#tox) to test your package in a virtual environment, because you want to test the *installed* version of your package, not the local code from the repository.
 
-解释下，意思是，如果你通过添加`__init__.py`去改变改变测试目录，使其变为一个测试模块，那么pytest会将根目录添加到sys.path中，使得同级的python包mypkg也可以导入了。但是对于使用tox来多环境测试来说，这是有问题的。
+解释下，意思是，如果你通过添加`__init__.py`改变测试目录，使其变为一个测试模块，那么pytest会将根目录添加到sys.path中，使得同级的python包mypkg也可以导入了。但是对于使用tox来多环境测试来说，这是有问题的。
 
 所以mypkg也能导入这就是我能顺利运行pytest的原因，但是这种情况下，对tox使用不利，虽然公司的代码限定了python版本不需要使用tox。
 
