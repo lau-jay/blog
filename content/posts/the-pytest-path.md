@@ -2,7 +2,7 @@
 title = "The Pytest Discovery"
 date = 2020-05-08T07:38:45+08:00
 images = []
-tags = ["purest"]
+tags = ["pytest"]
 categories = ["python"]
 draft = false
 
