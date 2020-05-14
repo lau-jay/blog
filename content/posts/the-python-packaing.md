@@ -55,7 +55,7 @@ setup(name="jay_hello",
 pip install . 
 ```
 
-本地开发时建议使用，原因是其使用了软链接，你对代码文件的任何更改不再需要任何操作被使用
+本地开发时建议使用下面这种，原因是其使用了软链接，你对代码文件的任何更改不再需要任何操作被使用
 
 ```shell
 pip install -e .
@@ -99,11 +99,11 @@ setup参数解析
 
 `install_requires`类型是字符串或者字符串列表，
 
-19.0版本开始pip移除了对 `dependency_links` 的支持
+ps: 19.0版本开始pip移除了对 `dependency_links` 的支持
 
 ### 提供命令行
 
-`entry_points`：这个参数允许Python函数直接注册为命令行工具，这个将非常方便提供程序的命令行工具
+`entry_points`：这个参数允许Python函数直接注册为命令行工具，这个机制非常可以方便地提供程序的命令行工具
 
 ```ptyhon
 setup(
