@@ -1,5 +1,5 @@
 +++
-title = "The Python Packaing"
+title = "The Python Packaging"
 date = 2020-05-14T08:39:47+08:00
 images = []
 tags = ["tool", "packaging"]
