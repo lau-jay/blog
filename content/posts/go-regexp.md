@@ -2,7 +2,7 @@
 title = "golang里被中括号坑的记录"
 date = 2020-12-06T18:00:59+08:00
 images = []
-tags = ["bug"，'Hugo"']
+tags = ["bug","Hugo"]
 categories = ["tool"]
 draft = false
 
