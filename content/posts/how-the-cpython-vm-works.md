@@ -5,6 +5,7 @@ images = []
 tags = ["translate"]
 categories = ["python"]
 draft = true
+
 +++
 
 > [原文](https://tenthousandmeters.com/blog/python-behind-the-scenes-1-how-the-cpython-vm-works/) 
@@ -85,7 +86,7 @@ LOAD_FAST操作码对应于字节124，参数为0。LOAD_CONST操作码对应于
 
 CPython的核心是执行字节码的虚拟机。 通过查看前面的示例, 您可能会猜测它是如何工作的。 CPython的VM是基于堆栈的。 这意味着它使用堆栈执行指令来存储和检索数据。 LOAD_FAST指令将局部变量压入堆栈。 LOAD_CONST将一个常数压栈。 BINARY_ADD从堆栈中弹出两个对象，将它们加起来并将结果压回去。 最后，RETURN_VALUE弹出堆栈中的所有内容，并将结果返回给其调用方。
 
-字节码执行发生在巨大的求值循环(evaluation loop)中，该循环在有指令执行时运行。 它将在产生值或产生错误时停止。
+字节码在一个巨大的循环(evaluation loop)中执行，该循环在有指令时运行。 它将在产生值或产生错误时停止。
 
 这样的简短概述会引起了很多问题：
 
