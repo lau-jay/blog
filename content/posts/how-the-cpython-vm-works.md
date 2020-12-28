@@ -157,6 +157,161 @@ add_4 = make_add_x(4)
 add_5 = make_add_x(5)
 ```
 
-`make_add_x()`函数的字节码包含MAKE_FUNCTION指令。函数`add_4()`和`add_5()`是使用相同的代码对象调用此指令的结果。但是有一个不同的参数– x的值
+`make_add_x()`函数的字节码包含MAKE_FUNCTION指令。函数`add_4()`和`add_5()`是使用相同的代码对象调用此指令的结果。但是有一个不同的参数– x的值。每个函数都通过[cell variables](https://tenthousandmeters.com/blog/python-behind-the-scenes-5-how-variables-are-implemented-in-cpython/)获得自己的功能，该机制使我们能够创建诸如`add_4()`和`add_5()`之类的闭包。
+
+在讲述下一个概念之前, 让我们先来查看代码和函数对象的定义，以更好地了解它们的含义。
+
+```c
+struct PyCodeObject {
+    PyObject_HEAD
+    int co_argcount;            /* #arguments, except *args */
+    int co_posonlyargcount;     /* #positional only arguments */
+    int co_kwonlyargcount;      /* #keyword only arguments */
+    int co_nlocals;             /* #local variables */
+    int co_stacksize;           /* #entries needed for evaluation stack */
+    int co_flags;               /* CO_..., see below */
+    int co_firstlineno;         /* first source line number */
+    PyObject *co_code;          /* instruction opcodes */
+    PyObject *co_consts;        /* list (constants used) */
+    PyObject *co_names;         /* list of strings (names used) */
+    PyObject *co_varnames;      /* tuple of strings (local variable names) */
+    PyObject *co_freevars;      /* tuple of strings (free variable names) */
+    PyObject *co_cellvars;      /* tuple of strings (cell variable names) */
+
+    Py_ssize_t *co_cell2arg;    /* Maps cell vars which are arguments. */
+    PyObject *co_filename;      /* unicode (where it was loaded from) */
+    PyObject *co_name;          /* unicode (name, for reference) */
+        /* ... more members ... */
+};
+```
+
+```c
+typedef struct {
+    PyObject_HEAD
+    PyObject *func_code;        /* A code object, the __code__ attribute */
+    PyObject *func_globals;     /* A dictionary (other mappings won't do) */
+    PyObject *func_defaults;    /* NULL or a tuple */
+    PyObject *func_kwdefaults;  /* NULL or a dict */
+    PyObject *func_closure;     /* NULL or a tuple of cell objects */
+    PyObject *func_doc;         /* The __doc__ attribute, can be anything */
+    PyObject *func_name;        /* The __name__ attribute, a string object */
+    PyObject *func_dict;        /* The __dict__ attribute, a dict or NULL */
+    PyObject *func_weakreflist; /* List of weak references */
+    PyObject *func_module;      /* The __module__ attribute, can be anything */
+    PyObject *func_annotations; /* Annotations, a dict or NULL */
+    PyObject *func_qualname;    /* The qualified name */
+    vectorcallfunc vectorcall;
+} PyFunctionObject;
+
+```
+
+
 
 ### frames
+
+VM执行代码对象时，必须跟踪变量的值和不断变化值的堆栈。它还需要记住在哪里停止执行当前代码对象以执行另一个代码对象，以及在哪里返回。 CPython将此信息存储在frame object或简单的frame中。 frame提供了代码对象可以执行需要的state。 随着我们对源代码越来越熟悉，因此我在这里也保留了frame object的定义：
+
+```c
+struct _frame {
+    PyObject_VAR_HEAD
+    struct _frame *f_back;      /* previous frame, or NULL */
+    PyCodeObject *f_code;       /* code segment */
+    PyObject *f_builtins;       /* builtin symbol table (PyDictObject) */
+    PyObject *f_globals;        /* global symbol table (PyDictObject) */
+    PyObject *f_locals;         /* local symbol table (any mapping) */
+    PyObject **f_valuestack;    /* points after the last local */
+
+    PyObject **f_stacktop;          /* Next free slot in f_valuestack.  ... */
+    PyObject *f_trace;          /* Trace function */
+    char f_trace_lines;         /* Emit per-line trace events? */
+    char f_trace_opcodes;       /* Emit per-opcode trace events? */
+
+    /* Borrowed reference to a generator, or NULL */
+    PyObject *f_gen;
+
+    int f_lasti;                /* Last instruction if called */
+    /* ... */
+    int f_lineno;               /* Current line number */
+    int f_iblock;               /* index in f_blockstack */
+    char f_executing;           /* whether the frame is still executing */
+    PyTryBlock f_blockstack[CO_MAXBLOCKS]; /* for try and loop blocks */
+    PyObject *f_localsplus[1];  /* locals+stack, dynamically sized */
+};
+
+```
+
+第一个frame在执行模块的代码对象时创建。 每当需要执行另一个代码对象，CPython都会创建一个新frame。 每个frame都有对前一frame的引用。 因此，frame形成frame的栈，也称为调用栈，当前frame位于顶部。 调用函数时，会将新的frame压入栈。 从当前执行的frame返回时，CPython通过记住其最后处理的指令来继续执行前一frame。 从某种意义上来说，CPython VM除了构造和执行frame外什么也不做。 但是，正如我们将很快看到的那样，这个描述，简单来说说，隐藏了一些细节。
+
+### Threads, interpreters, runtime
+
+我们已经研究了三个重要概念：
+
+* 代码对象
+* 函数对象
+* 帧对象
+
+CPython还有三个别的:
+
+* 线程状态
+* 解释器状态
+* 运行时状态
+
+#### 线程状态
+
+A thread state is a data structure that contains thread-specific data including the call stack, the exception state and the debugging settings. It should not be confused with an OS thread. They're closely connected, though. Consider what happens when you use the standard [`treading`](https://docs.python.org/3/library/threading.html) module to run a function in a separate thread:
+
+```python
+from threading import Thread
+
+def f():
+    """Perform an I/O-bound task"""
+    pass
+
+t = Thread(target=f)
+t.start()
+t.join()
+```
+
+`t.start()` actually creates a new OS thread by calling the OS function (`pthread_create()` on UNIX-like systems and `_beginthreadex()` on Windows). The newly created thread invokes the function from the `_thread` module that is responsible for calling the target. This function receives not only the target and the target's arguments but also a new thread state to be used within a new OS thread. An OS thread enters the evaluation loop with its own thread state, thus always having it at hand.
+
+We may remember here the famous GIL (Global Interpreter Lock) that prevents multiple threads to be in the evaluation loop at the same time. The major reason for that is to protect the state of CPython from corruption without introducing more fine-grained locks. [The Python/C API Reference](https://docs.python.org/3.9/c-api/index.html) explains the GIL clearly:
+
+>*The Python interpreter is not fully thread-safe. In order to support multi-threaded Python programs, there’s a global lock, called the global interpreter lock or GIL, that must be held by the current thread before it can safely access Python objects. Without the lock, even the simplest operations could cause problems in a multi-threaded program: for example, when two threads simultaneously increment the reference count of the same object, the reference count could end up being incremented only once instead of twice.*
+
+To manage multiple threads, there needs to be a higher-level data structure than a thread state.
+
+#### interpreter and runtime states
+
+In fact, there are two of them: an interpreter state and the runtime state. The need for both may not seem immediately obvious. However, an execution of any program has at least one instance of each and there are good reasons for that.
+
+An interpreter state is a group of threads along with the data specific to this group. Threads share such things as loaded modules (`sys.modules`), builtins (`builtins.__dict__`) and the import system (`importlib`).
+
+The runtime state is a global variable. It stores data specific to a process. This includes the state of CPython (e.g. is it initialized or not?) and the GIL mechanism.
+
+Usually, all threads of a process belong to the same interpreter. There are, however, rare cases when one may want to create a subinterpreter to isolate a group of threads. [mod_wsgi](https://modwsgi.readthedocs.io/en/develop/user-guides/processes-and-threading.html#python-sub-interpreters), which uses distinct interpreters to run WSGI applications, is one example. The most obvious effect of isolation is that each group of threads gets its own version of all modules including `__main__`, which is a global namespace.
+
+CPython doesn't provide an easy way to create new interpreters analogous to the `threading` module. This feature is supported only via Python/C API, but [this may change](https://www.python.org/dev/peps/pep-0554/) someday.
+
+### Architecture summary
+
+Let's make a quick summary of the CPython's architecture to see how everything fits together. The interpreter can be viewed as a layered structure. The following sums up what the layers are:
+
+1. Runtime: the global state of a process; this includes the GIL and the memory allocation mechanism.
+2. Interpreter: a group of threads and some data they share such as imported modules.
+3. Thread: data specific to a single OS thread; this includes the call stack.
+4. Frame: an element of the call stack; a frame contains a code object and provides a state to execute it.
+5. Evaluation loop: a place where a frame object gets executed.
+
+The layers are represented by the corresponding data structures, which we've already seen. In some cases they are not equivalent, though. For example, the mechanism of memory allocation is implemented using global variables. It's not a part of the runtime state but certainly a part of the runtime layer.
+
+### Conclusion
+
+In this part we've outlined what `python` does to execute a Python program. We've seen that it works in three stages:
+
+1. initializes CPython
+2. compiles the source code to the module's code object; and
+3. executes the bytecode of the code object.
+
+The part of the interpreter that is responsible for the bytecode execution is called a virtual machine. The CPython VM has several particularly important concepts: code objects, frame objects, thread states, interpreter states and the runtime. These data structures form the core of the CPython's architecture.
+
+We haven't covered a lot of things. We avoided digging into the source code. The initialization and compilation stages were completely out of our scope. Instead, we started with the broad overview of the VM. In this way, I think, we can better see the responsibilities of each stage. Now we know what CPython compiles source code to – to the code object. [Next time](https://tenthousandmeters.com/blog/python-behind-the-scenes-2-how-the-cpython-compiler-works/) we'll see how it does that.
