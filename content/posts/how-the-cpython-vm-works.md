@@ -281,11 +281,11 @@ t.join()
 
 实际上，上面说的更高级的数据结构有两个：解释器状态和运行时状态。 两者的差别似乎并不十分明显。
 
-解释器状态是一组线程以及该组特定的数据. 线程共享诸如加载的模块(`sys.modules`), , 内置模块(`builtins.__dict__`)以及导入系统之类的东西 (`importlib`)。
+解释器状态是一组线程以及该组特定的数据. 线程共享诸如加载的模块(`sys.modules`),  内置模块(`builtins.__dict__`)以及导入系统之类的东西 (`importlib`)。
 
 运行时状态是全局变量。它存储特定进程的数据。 其中包括CPython的状态（例如，是否已初始化？）和GIL机制。
 
-通常，一个进程的所有线程都属于同一个解释器。 T但是，在少数情况下，可能需要创建一个子解释器来隔离一组线程。一个例子是 [mod_wsgi](https://modwsgi.readthedocs.io/en/develop/user-guides/processes-and-threading.html#python-sub-interpreters) ，它使用不同的解释器来运行WSGI应用程序。隔离的最明显效果是每组线程都有自己的所有模块版本，包括`__main__`，这是一个全局命名空间。
+通常，一个进程的所有线程都属于同一个解释器。 但是，在少数情况下，可能需要创建一个子解释器来隔离一组线程。一个例子是 [mod_wsgi](https://modwsgi.readthedocs.io/en/develop/user-guides/processes-and-threading.html#python-sub-interpreters) ，它使用不同的解释器来运行WSGI应用程序。隔离的最明显效果是每组线程都有自己的所有模块版本，包括`__main__`，这是一个全局命名空间。
 
 CPython没有提供类似于`threading`模块的简便方法来创建新的解释器。目前仅通过Python/C API提供支持,  [但有一天可能会更改](https://www.python.org/dev/peps/pep-0554/) 。
 
