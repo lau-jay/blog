@@ -1,10 +1,10 @@
 +++
 title = "Python的幕后#1: CPython VM 是如何工作的"
-date = 2020-12-21T10:20:20+08:00
+date = 2021-01-01T10:20:20+08:00
 images = []
 tags = ["translate"]
 categories = ["python"]
-draft = true
+draft = false
 
 +++
 
@@ -301,14 +301,17 @@ CPython没有提供类似于`threading`模块的简便方法来创建新的解�
 
 这些层由我们已经看到的相应数据结构表示。 在某些情况下，它们并不等价。 例如，使用全局变量来实现内存分配机制。 它不是运行时状态的一部分，但肯定是运行时层的一部分。
 
-### Conclusion
+### 结论
 
-In this part we've outlined what `python` does to execute a Python program. We've seen that it works in three stages:
+在这一部分中，我们概述了`python` 命令为执行Python程序所做的工作。 我们已经看到它在三个阶段起作用:
 
-1. initializes CPython
-2. compiles the source code to the module's code object; and
-3. executes the bytecode of the code object.
+1. 初始化CPython
+2. 将源代码编译为模块的代码对象； 和
+3. 执行代码对象的字节码。
 
-The part of the interpreter that is responsible for the bytecode execution is called a virtual machine. The CPython VM has several particularly important concepts: code objects, frame objects, thread states, interpreter states and the runtime. These data structures form the core of the CPython's architecture.
+解释器中负责字节码执行的部分称为虚拟机。 CPython VM具有几个特别重要的概念：代码对象，帧对象，线程状态，解释器状态和运行时。 这些数据结构构成了CPython体系结构的核心。
 
-We haven't covered a lot of things. We avoided digging into the source code. The initialization and compilation stages were completely out of our scope. Instead, we started with the broad overview of the VM. In this way, I think, we can better see the responsibilities of each stage. Now we know what CPython compiles source code to – to the code object. [Next time](https://tenthousandmeters.com/blog/python-behind-the-scenes-2-how-the-cpython-compiler-works/) we'll see how it does that.
+我们没有涉及很多东西。 我们避免深入研究源代码。 初始化和编译阶段完全超出了我们的范围。 相反，我们从虚拟机的概述开始。 我认为，通过这种方式，我们可以更好地了解每个阶段的职责。 现在，我们知道了CPython将源代码编译到的代码对象。
+
+[下一篇](https://tenthousandmeters.com/blog/python-behind-the-scenes-2-how-the-cpython-compiler-works/)，我们将看到它是如何做到的。
+
