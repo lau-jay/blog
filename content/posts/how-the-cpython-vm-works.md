@@ -293,13 +293,13 @@ CPython没有提供类似于`threading`模块的简便方法来创建新的解�
 
 让我们快速总结一下CPython的体系结构，看看一切如何融合在一起。解释器可以看作是分层结构。 以下总结了这些层是什么:
 
-1. Runtime: the global state of a process; this includes the GIL and the memory allocation mechanism.
-2. Interpreter: a group of threads and some data they share such as imported modules.
-3. Thread: data specific to a single OS thread; this includes the call stack.
-4. Frame: an element of the call stack; a frame contains a code object and provides a state to execute it.
-5. Evaluation loop: a place where a frame object gets executed.
+1. 运行时: 进程的整体状态；这包括GIL和内存分配机制
+2. 解释器: 一组线程和它们共享的一些数据，例如导入的模块。
+3. 线程：包含特定数据的操作系统线程； 包括调用堆栈。
+4. 帧：调用堆栈的元素； 帧包含一个代码对象，并提供执行它的状态。
+5. 执行循环：执行帧对象的地方。
 
-The layers are represented by the corresponding data structures, which we've already seen. In some cases they are not equivalent, though. For example, the mechanism of memory allocation is implemented using global variables. It's not a part of the runtime state but certainly a part of the runtime layer.
+这些层由我们已经看到的相应数据结构表示。 在某些情况下，它们并不等价。 例如，使用全局变量来实现内存分配机制。 它不是运行时状态的一部分，但肯定是运行时层的一部分。
 
 ### Conclusion
 
