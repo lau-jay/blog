@@ -41,3 +41,109 @@ LLVM工具链是该模型成功的一个很好的例子。 有一些C，Rust，S
 看起来很相似，不是吗？ 这里的重点是，以前学习过编译器的任何人都应该熟悉CPython编译器的结构。如果没有的话，一本著名的[Dragon Book](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)是对编译器构造理论的出色介绍。 它很长，但是即使只阅读前几章，您也会从中受益。
 
 我们进行的比较需要提前解释一些东西。 首先，从3.9版本开始，CPython默认使用一个新的解析器，该解析器立即输出AST（抽象语法树），而无需进行构建解析树的中间步骤。 因此，CPython编译器的模型被进一步简化。 其次，与静态编译器的相应阶段相比，CPython编译器的某些现成阶段做得很少，有人可能会说CPython编译器不过是前端。 我们不会采用hardcore compiler 编写者的这种观点。
+
+### 编译器架构概述
+
+这些图很不错，但是它们隐藏了许多细节并且可能会引起误解，因此让我们花一些时间来讨论CPython编译器的总体设计。
+
+CPython编译器的两个主要组件是：
+
+1. 前端和
+2. 后端
+
+前端获取Python代码并生成AST。后端获取AST并生成一个代码对象。在整个CPython源代码中，术语“解析器”和“编译器”分别用于前端和后端。这是编译器一词的另一含义。最好将其称为类似代码对象生成器的名称，但是我们会坚持使用编译器，因为它似乎不会造成太多麻烦。
+
+解析器的工作是检查输入是否在语法上正确的Python代码。 如果不是，则解析器报告如下错误：
+
+```python
+x = y = = 12
+        ^
+SyntaxError: invalid syntax
+```
+
+如果输入正确，将那么解析器将根据语法规则对其进行组织。语法定义语言的语法。 形式语法的概念对于我们的讨论是如此重要，我想我们应该花点时间回顾一下它的正式定义。
+
+根据经典定义，语法是一个包含四个项目的元组：
+
+- Σ – 一组有限的终结符，或简单的终结符（通常用小写字母表示）
+- N – 一组有限的非终结符号，或简称为非终结符（通常用大写字母表示）。
+- P – 生成式, 一套生产规则。 对于上下文无关的语法（包括Python语法），生产规则只是从非终结符到任意序列的终结符和非终结符的映射，例如 A→aB。
+- S – 识别符.
+
+文法定义了一种语言，其中包含可以通过应用生成式生成的所有终结符序列。为了生成某个序列，以符号S开头，然后根据生成式将每个非终结符号递归替换为一个序列，直到整个序列由终结符组成。 使用已建立的约定惯例，列出生成式以指定语法就足够了。 例如，这是一个简单的语法，该语法生成交替的一和零的序列:
+
+S→10S|10
+
+当我们更详细地分析解析器时，我们将继续讨论文法。
+
+### Abstract syntax tree
+
+解析器的最终目标是生成AST。AST是一种树形数据结构，用作源代码的高级表示。这是标准ast模块产生的相应[AST](https://docs.python.org/3/library/ast.html)的一段代码和转储的示例
+
+```python
+x = 123
+f(x)
+```
+
+```shell
+$ python -m ast example1.py
+Module(
+   body=[
+      Assign(
+         targets=[
+            Name(id='x', ctx=Store())],
+         value=Constant(value=123)),
+      Expr(
+         value=Call(
+            func=Name(id='f', ctx=Load()),
+            args=[
+               Name(id='x', ctx=Load())],
+            keywords=[]))],
+   type_ignores=[])
+```
+
+AST节点的类型使用[Zephyr抽象文法定义语言](https://www.cs.princeton.edu/research/techreps/TR-554-97) (ASDL) 。ASDL是一种简单的声明性语言，用于描述树状IR，即AST。这是[Parser/Python.asdl](https://github.com/python/cpython/blob/master/Parser/Python.asdl)中的Assign和Expr节点的定义：
+
+```python
+stmt = ... | Assign(expr* targets, expr value, string? type_comment) | ...
+expr = ... | Call(expr func, expr* args, keyword* keywords) | ...
+```
+
+ASDL规范让我们了解了Python AST的样子。但是，解析器需要在C代码中表示AST。幸运的是，从AST节点的ASDL描述中生成C结构很容易。这就是CPython所做的，结果如下所示：
+
+```c
+struct _stmt {
+    enum _stmt_kind kind;
+    union {
+        // ... other kinds of statements
+        struct {
+            asdl_seq *targets;
+            expr_ty value;
+            string type_comment;
+        } Assign;
+        // ... other kinds of statements
+    } v;
+    int lineno;
+    int col_offset;
+    int end_lineno;
+    int end_col_offset;
+};
+
+struct _expr {
+    enum _expr_kind kind;
+    union {
+        // ... other kinds of expressions
+        struct {
+            expr_ty func;
+            asdl_seq *args;
+            asdl_seq *keywords;
+        } Call;
+        // ... other kinds of expressions
+    } v;
+    // ... same as in _stmt
+};
+```
+
+AST是一种易于使用的表示形式。 它告诉程序做什么，隐藏所有不必要的信息，例如缩进，标点和其他Python的句法特性。
+
+One of the main beneficiaries of the AST representation is the compiler, which can walk an AST and emit bytecode in a relatively straightforward manner. Many Python tools, besides the compiler, use the AST to work with Python code. For example, [pytest](https://github.com/pytest-dev/pytest/) makes changes to an AST to provide useful information when the `assert` statement fails, which by itself does nothing but raises an `AssertionError` if the expression evaluates to `False`. Another example is [Bandit](https://github.com/PyCQA/bandit) that finds common security issues in Python code by analyzing an AST.
