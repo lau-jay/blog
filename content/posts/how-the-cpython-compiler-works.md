@@ -146,4 +146,5 @@ struct _expr {
 
 AST是一种易于使用的表示形式。 它告诉程序做什么，隐藏所有不必要的信息，例如缩进，标点和其他Python的句法特性。
 
-One of the main beneficiaries of the AST representation is the compiler, which can walk an AST and emit bytecode in a relatively straightforward manner. Many Python tools, besides the compiler, use the AST to work with Python code. For example, [pytest](https://github.com/pytest-dev/pytest/) makes changes to an AST to provide useful information when the `assert` statement fails, which by itself does nothing but raises an `AssertionError` if the expression evaluates to `False`. Another example is [Bandit](https://github.com/PyCQA/bandit) that finds common security issues in Python code by analyzing an AST.
+AST表示法的主要受益者之一是编译器， which can walk an AST and emit bytecode in a relatively straightforward manner. 除了编译器之外，许多Python工具都使用AST来处理Python代码。例如，[pytest](https://github.com/pytest-dev/pytest/)在`assert`语句失败时，对AST进行更改以提供有用的信息，它本身不执行任何操作，但是如果表达式的计算结果为`False`，则会引发`AssertionError`。 另一个例子是[Bandit](https://github.com/PyCQA/bandit)，它通过分析AST在Python代码中发现常见的安全问题。 
+
