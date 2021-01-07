@@ -148,3 +148,30 @@ AST是一种易于使用的表示形式。 它告诉程序做什么，隐藏所�
 
 AST表示法的主要受益者之一是编译器， which can walk an AST and emit bytecode in a relatively straightforward manner. 除了编译器之外，许多Python工具都使用AST来处理Python代码。例如，[pytest](https://github.com/pytest-dev/pytest/)在`assert`语句失败时，对AST进行更改以提供有用的信息，它本身不执行任何操作，但是如果表达式的计算结果为`False`，则会引发`AssertionError`。 另一个例子是[Bandit](https://github.com/PyCQA/bandit)，它通过分析AST在Python代码中发现常见的安全问题。 
 
+现在，当我们稍微学习了Python AST之后，我们可以看看解析器是如何从源代码中构建它的。
+
+### 从源代码到AST
+
+事实上，正如我前面所说，从3.9版本开始，CPython的解析器不是一个，而是两个。新的解析器是默认使用的，也可以通过传递`-X oldparser`选项来使用旧的解析器。 但在CPython 3.10中，旧的解析器将被完全删除。这两个解析器有很大的不同。我们将重点讨论新的解析器，但在此之前，先讨论一下旧的解析器。
+
+#### 旧的解释器
+
+在很长一段时间里，Python的语法是由生成式文法正式定义的。在很长一段时间里，Python的语法是由生成式文法正式定义的。问题在于，生成式文法并不能直接对应于能够解析这些序列的解析算法。幸运的是，聪明的人已经能够区分出生成文法的类别，并为其建立相应的解析器。这些文法包括[上下文无关](https://en.wikipedia.org/wiki/Context-free_grammar)、[LL(k)](https://en.wikipedia.org/wiki/LL_grammar)、[LR(k)](https://en.wikipedia.org/wiki/LR_parser)、[LALR](https://en.wikipedia.org/wiki/LALR_parser) 和许多其他类型的文法。Python文法是LL(1)。它使用一种扩展的 Backus-Naur 形式 ([EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form)) 来指定。为了了解如何使用它来描述Python的语法，请看一下while语句的规则。
+
+```
+file_input: (NEWLINE | stmt)* ENDMARKER
+stmt: simple_stmt | compound_stmt
+compound_stmt: ... | while_stmt | ...
+while_stmt: 'while' namedexpr_test ':' suite ['else' ':' suite]
+suite: simple_stmt | NEWLINE INDENT stmt+ DEDENT
+...
+```
+
+CPython扩展了传统记法，具有以下特点:
+
+* 替代分组: (a | b)
+* 选择部分: [a]
+* 零个或多个和一个或多个重复: a* 和 a+
+
+我们可以看到[为什么Guido van Rossum选择使用正则表达式](https://www.blogger.com/profile/12821714508588242516)。它们允许以一种更自然（对程序员来说）的方式来表达编程语言的语法。不写A→aA|a ，我们可以直接写A→a+。这个选择是有代价的。CPython必须开发一种方法来支持扩展符号。
+
