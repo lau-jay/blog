@@ -175,3 +175,35 @@ CPython扩展了传统记法，具有以下特点:
 
 我们可以看到[为什么Guido van Rossum选择使用正则表达式](https://www.blogger.com/profile/12821714508588242516)。它们允许以一种更自然（对程序员来说）的方式来表达编程语言的语法。不写A→aA|a ，我们可以直接写A→a+。这个选择是有代价的。CPython必须开发一种方法来支持扩展符号。
 
+LL(1)文法的解析是一个已解决的问题。解决的方法是作为自上而下的解析器的[下推自动机](https://en.wikipedia.org/wiki/Pushdown_automaton)（PDA）。PDA通过使用栈模拟输入字符串的生成进行操作。为了解析一些输入，它从栈上的起始符号开始。然后，它查看输入中的第一个符号，猜测应该对起始符号应用哪条规则，并将其替换为该规则的右侧。如果栈上的栈顶符号是一个终结符，与输入中的下一个符号相匹配，PDA就会把它出栈并跳过匹配的符号。如果栈顶符号是一个非终结符，PDA会根据输入中的下一个符号，尝试猜测要替换它的规则。这个过程一直重复，直到扫描完整个输入，或者如果PDA无法将栈上的一个终结符与输入中的下一个符号相匹配。后一种情况意味着输入字符串无法被解析。
+
+CPython由于生成式的写法，不能直接使用这种方法，所以必须开发新的方法。
+
+为了支持扩展的符号，旧的解析器用[确定性有限自动机](https://en.wikipedia.org/wiki/Deterministic_finite_automaton)(DFA)来表示语法的每条规则，DFA以等价于正则表达式而闻名。解析器本身是一个像PDA一样的基于栈的自动机，但它不是在栈上推送符号，而是推送DFA的状态。下面是老解析器使用的关键数据结构。
+
+```c
+typedef struct {
+    int              s_state;       /* State in current DFA */
+    const dfa       *s_dfa;         /* Current DFA */
+    struct _node    *s_parent;      /* Where to add next node */
+} stackentry;
+
+typedef struct {
+    stackentry      *s_top;         /* Top entry */
+    stackentry       s_base[MAXSTACK];/* Array of stack entries */
+                                    /* NB The stack grows down */
+} stack;
+
+typedef struct {
+    stack           p_stack;        /* Stack of parser states */
+    grammar         *p_grammar;     /* Grammar to use */
+                                    // basically, a collection of DFAs
+    node            *p_tree;        /* Top of parse tree */
+    // ...
+} parser_state;
+```
+
+还有[Parser/parser.c](https://github.com/python/cpython/blob/3.9/Parser/parser.c)中的注释，总结了这个方法:
+
+>一个解析规则用一个确定性有限状态自动机（DFA）来表示。DFA中的一个节点代表解析器的一个状态；一个弧线代表一个过渡。状态迁移要么用终结符标注，要么用非终结符标注。当解析器决定跟随一个标有非终结符的弧线时，它就会被递归调用，以代表该解析规则的DFA作为初始状态；当该DFA接受时，调用它的解析器就会继续。递归调用的解析器构建的解析树作为子树插入到当前的解析树中。
+
