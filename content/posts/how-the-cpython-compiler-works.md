@@ -264,13 +264,13 @@ $ python -m tokenize example2.py
 5,0-5,0:            ENDMARKER      ''     
 ```
 
-This is how the program looks to the parser. When the parser needs a token, it requests one from the tokenizer. The tokenizer reads one character at a time from the buffer and tries to match the seen prefix with some type of token. How does the tokenizer work with different encodings? It relies on the `io` module. First, the tokenizer detects the encoding. If no encoding is specified, it defaults to UTF-8. Then, the tokenizer opens a file with a C call, which is equivalent to Python's `open(fd, mode='r', encoding=enc)`, and reads its contents by calling the `readline()` function. This function returns a unicode string. The characters the tokenizer reads are just bytes in the UTF-8 representation of that string (or EOF).
+这是该程序在文法解析器中的样子。当文法解析器需要一个符号时，它就会向词法分析器请求一个符号。词法分析器每次从缓冲区中读取一个字符，并尝试将看到的前缀与某种类型的符号进行匹配。词法分析器如何处理不同的编码？它依赖于`io`模块。首先，词法分析器检测编码。如果没有指定编码，它默认为UTF-8。然后，词法分析器用 C 调用打开一个文件，相当于 Python 的 `open(fd, mode='r', encoding=enc)`，并通过调用`readline()`函数读取文件内容。这个函数返回一个unicode字符串。词法分析器读取的字符只是该字符串UTF-8表示的字节（或EOF）。
 
-We could define what a number or a name is directly in the grammar, though it would become more complex. What we couldn't do is to express the significance of indentation in the grammar without making it [context-sensitive](https://en.wikipedia.org/wiki/Context-sensitive_grammar) and, therefore, not suitable for parsing. The tokenizer makes the work of the parser much easier by providing the `INDENT` and `DEDENT` tokens. They mean what the curly braces mean in a language like C. The tokenizer is powerful enough to handle indentation because it has state. The current indentation level is kept on the top of the stack. When the level is increased, it's pushed on the stack. If the level is decreased, all higher levels are popped from the stack.
+我们可以直接在文法中定义一个数字或一个名称是什么，尽管这会变得更加复杂。我们不能做的是在文法中表达缩进的意义，而不使其成为[上下文敏感的](https://en.wikipedia.org/wiki/Context-sensitive_grammar)，因此，缩进不适合解析。词法分析器通过提供 `INDENT `和 `DEDENT `符号，使解析器的工作变得更加容易。它们的意思就是像 C 语言中大括号的意思。词法分析器有足够的能力来处理缩进，因为它有状态。当前的缩进级别被保存在栈的顶部。当级别增加时，它的缩进会被推送到栈上。如果级别降低，所有更高的级别都会从堆栈中弹出。
 
-The old parser is a non-trivial piece of the CPython codebase. The DFAs for the rules of the grammar are generated automatically, but other parts of the parser are written by hand. This is in contrast with the new parser, which seems to be a much more elegant solution to the problem of parsing Python code.
+旧的文法分析器是CPython代码库中的一个不小的部分。文法的DFA是自动生成的，但文法分析器的其他部分是手工编写的。这与新的文法分析器形成鲜明对比，新的文法分析器似乎是解决Python代码解析问题的一个更优雅的方案。
 
-#### new parser
+#### 新的文法分析器
 
 The new parser comes with the new grammar. This grammar is a [Parsing Expression Grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar) (PEG). The important thing to understand is that PEG is not just a class of grammars. It's another way to define a grammar. PEGs were [introduced by Bryan Ford in 2004](https://pdos.csail.mit.edu/~baford/packrat/popl04/) as a tool to describe a programming language and to generate a parser based on the description. A PEG is different from the traditional formal grammar in that its rules map nonterminals to the parsing expressions instead of just sequences of symbols. This is in the spirit of CPython. A parsing expression is defined inductively. If e, e1, and e2 are parsing expressions, then so is:
 
