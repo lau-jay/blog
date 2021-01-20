@@ -272,17 +272,17 @@ $ python -m tokenize example2.py
 
 #### 新的文法分析器
 
-The new parser comes with the new grammar. This grammar is a [Parsing Expression Grammar](https://en.wikipedia.org/wiki/Parsing_expression_grammar) (PEG). The important thing to understand is that PEG is not just a class of grammars. It's another way to define a grammar. PEGs were [introduced by Bryan Ford in 2004](https://pdos.csail.mit.edu/~baford/packrat/popl04/) as a tool to describe a programming language and to generate a parser based on the description. A PEG is different from the traditional formal grammar in that its rules map nonterminals to the parsing expressions instead of just sequences of symbols. This is in the spirit of CPython. A parsing expression is defined inductively. If e, e1, and e2 are parsing expressions, then so is:
+新的解析器带有新的文法。该文法法为[解析表达语法](https://en.wikipedia.org/wiki/Parsing_expression_grammar)（PEG）。要明白的是，PEG不仅仅是一类文法。 这是另一种定义文法的方式。PEGs是[由Bryan Ford在2004年提出的](https://pdos.csail.mit.edu/~baford/packrat/popl04/)，作为描述一种编程语言并根据描述生成解析器的工具 。PEG与传统的形式化文法不同的是，它的规则将非终结符映射到解析表达式上，而不仅仅是符号序列。 这与CPython的理念是一致的。 解析表达式是归纳性定义的。 如果e、e1和e2是解析表达式,  那就意味着它是:
 
-1. the empty string
-2. any terminal
-3. any nonterminal
-4. e1e2, a sequence
-5. e1/e2, prioritized choice
-6. e∗, zero-or-more repetitions
-7. !e, a not-predicate.
+1. 空字符串
+2. 任何终结符
+3. 任何非终结符
+4. e1e2, 一个序列
+5. e1/e2, 优先选择
+6. e∗, 零次或多次重复
+7. !e, 非谓词
 
-PEGs are analytic grammars, which means that they are designed not only to generate languages but to analyze them as well. Ford formalized what it means for a parsing expression e to recognize an input x. Basically, any attempt to recognize an input with some parsing expression can either succeed or fail and consume some input or not. For example, applying the parsing expression a to the input ab results in a success and consumes a.
+PEGs是分析文法，这意味着它们不仅可以生成语言，还可以分析它们。Ford将解析表达式e识别输入x的含义形式化，基本上，任何用某个解析表达式识别输入的尝试，要么成功，要么失败,  消费掉输入x或者不消费。例如，将解析表达式a应用于输入ab的结果是成功，并消费掉a。
 
 This formalization allows converting any PEG to a [recursive descent parser](https://en.wikipedia.org/wiki/Recursive_descent_parser). A recursive descent parser associates each nonterminal of a grammar with a parsing function. In the case of a PEG, the body of a parsing function is an implementation of the corresponding parsing expression. If a parsing expression contains nonterminals, their parsing functions are called recursively.
 
