@@ -314,21 +314,21 @@ while_stmt[stmt_ty]:
 
 到此为止，我们结束了对解析的讨论，接下来看下AST。
 
-### AST optimization
+### AST 优化
 
-The diagram of the CPython compiler's architecture shows us the AST optimizer alongside the parser and the compiler. This probably overemphasizes the optimizer's role. The AST optimizer is confined to constant folding and was introduced only in CPython 3.7. Before CPython 3.7, constant folding was done at a later stage by the peephole optimizer. Nonetheless, due to the AST optimizer, we can write things like this:
+CPython编译器的架构图向我们展示了AST优化器以及解析器和编译器的情况。这可能过分强调了优化器的作用。AST优化器仅限于常量折叠，在CPython 3.7中才引入。在CPython 3.7之前，常量折叠是由窥孔优化器在后期完成的。然而，由于AST优化器的存在，我们可以写这样的东西:
 
 ```
 n = 2 ** 32 # easier to write and to read
 ```
 
-and expect it to be calculated at compile time.
+并可以预期在编译时计算出来。
 
-An example of a less obvious optimization is the conversion of a list of constants and a set of constants into a tuple and a frozenset respectively. This optimization is performed when a list or a set are used on the right-hand side of the `in` or `not in` operators.
+一个不太明显的优化例子是将一个常量列表和一个常量集分别转换为一个元组和一个frozenset。当在` in`或 `not in `运算符的右侧使用列表或集合时，会进行这种优化。
 
-### From AST to code object
+### 从AST到代码对象
 
-Up until now, we've been studying how CPython creates an AST from a source code, but as we've seen in the first post, the CPython VM knows nothing about the AST and is only able to execute a code object. The conversion of an AST to a code object is a job of the compiler. More specifically, the compiler must return the module's code object containing the module's bytecode along with the code objects for other code blocks in the module such as defined functions and classes.
+到目前为止，我们一直在研究CPython是如何从源代码中创建AST的，但正如我们在第一篇文章中看到的，CPython虚拟机对AST一无所知，只能执行一个代码对象。将AST转换为代码对象是编译器的工作。更具体地说，编译器必须返回模块的代码对象，其中包含模块的字节码以及模块中其他代码块的代码对象，如定义的函数和类。
 
 Sometimes the best way to understand a solution to a problem is to think of one's own. Let's ponder what we would do if we were the compiler. We start with the root node of an AST that represents a module. Children of this node are statements. Let's assume that the first statement is a simple assignment like `x = 1`. It's represented by the `Assign` AST node: `Assign(targets=[Name(id='x', ctx=Store())], value=Constant(value=1))`. To convert this node to a code object we need to create one, store constant `1` in the list of constants of the code object, store the name of the variable `x` in the list of names used in the code object and emit the `LOAD_CONST` and `STORE_NAME` instructions. We could write a function to do that. But even a simple assignment can be tricky. For example, imagine that the same assignment is made inside the body of a function. If `x` is a local variable, we should emit the `STORE_FAST` instruction. If `x` is a global variable, we should emit the `STORE_GLOBAL` instruction. Finally, if `x` is referenced by a nested function, we should emit the `STORE_DEREF` instruction. The problem is to determine what the type of the variable `x` is. CPython solves this problem by building a symbol table before compiling.
 
