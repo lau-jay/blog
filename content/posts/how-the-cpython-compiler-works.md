@@ -610,7 +610,6 @@ struct compiler_unit {
     int u_col_offset;      /* the offset of the current stmt */
 };
 ```
-
 Another data structure that is crucial for the compilation is the `compiler` struct, which represents the global state of the compilation. Here's its definition:
 
 ```C
