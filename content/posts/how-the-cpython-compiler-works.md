@@ -327,8 +327,7 @@ n = 2 ** 32 # easier to write and to read
 一个不太明显的优化的例子是将一个常数列表和一个常数集合分别转换为一个元组和一个frozenset。当在 `in` 或 `not in ` 右侧使用一个list或者set时，就会进行这种优化。
 
 ###  从AST到代码对象
-
-目前为止，我们一直在研究CPython如何从源代码创建AST，但正如第一篇文章中我们看到的，CPython的VM对AST的一无所知，它只是执行代码对象。将一个AST转化为代码对象是编译器的工作。 更具体地说，编译器必须返回模块的代码对象，其中包含模块的字节码以及模块中其他代码块的代码对象，如定义的函数和类。
+到目前为止，我们一直在研究CPython是如何从源代码中创建AST的，但正如我们在第一篇文章中看到的，CPython虚拟机对AST一无所知，只能执行一个代码对象。将AST转换为代码对象是编译器的工作。更具体地说，编译器必须返回模块的代码对象，其中包含模块的字节码以及模块中其他代码块的代码对象，如定义的函数和类。
 
 有时候，理解解决问题的最好方法是自己的思考。Let's ponder what we would do if we were the compiler. We start with the root node of an AST that represents a module. Children of this node are statements. Let's assume that the first statement is a simple assignment like `x = 1`. It's represented by the `Assign` AST node: `Assign(targets=[Name(id='x', ctx=Store())], value=Constant(value=1))`. To convert this node to a code object we need to create one, store constant `1` in the list of constants of the code object, store the name of the variable `x` in the list of names used in the code object and emit the `LOAD_CONST` and `STORE_NAME` instructions. We could write a function to do that. But even a simple assignment can be tricky. For example, imagine that the same assignment is made inside the body of a function. If `x` is a local variable, we should emit the `STORE_FAST` instruction. If `x` is a global variable, we should emit the `STORE_GLOBAL` instruction. Finally, if `x` is referenced by a nested function, we should emit the `STORE_DEREF` instruction. The problem is to determine what the type of the variable `x` is. CPython solves this problem by building a symbol table before compiling.
 
