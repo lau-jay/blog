@@ -1,5 +1,5 @@
 +++
-title = "Celery踩坑纪"
+title = "Celery踩坑记"
 date = 2021-05-06T20:02:10+08:00
 images = []
 tags = ['celery']
