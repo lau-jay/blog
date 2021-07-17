@@ -4,7 +4,7 @@ date = 2020-03-10T07:18:06+08:00
 images = []
 tags = ["transalte"]
 categories = ["rust"]
-draft = false
+draft = true
 +++
 
 > 原文[A half hour to learm rust](https://fasterthanli.me/blog/2020/a-half-hour-to-learn-rust/) 
