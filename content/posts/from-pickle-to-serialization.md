@@ -20,7 +20,7 @@ ValueError: unsupported pickle protocol: 5
 
 ## Pickle Protocol 5
 
-Pickle Protocol 5 来自[PEP574](https://www.python.org/dev/peps/pep-0574/) ，进入的Python版本是3.8，该PEP的基本原理的最后一句话：
+Pickle Protocol 5 来自[PEP574](https://www.python.org/dev/peps/pep-0574/) ，进入的Python版本是3.8，该PEP的基本原理这一小节的最后一句话：
 
 > This PEP aims to make `pickle` usable in a way where large data is handled as a separate stream of zero-copy buffers, letting the application handle those buffers optimally.
 
