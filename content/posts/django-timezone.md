@@ -38,7 +38,7 @@ GMT = UTC+0
 既然naive datetime object没有关于时区的信息存储，相对的aware datetime object就是指存储了时区信息的datetime object。在使用now函数的时候，可以指定时区，但该时区参数必须是datetime.tzinfo的子类
 
 ```python
->>> from django.utils.timezone import utc
+>>> from django.utils.timezone import utc, is_aware
 >>> import datetime
 >>> datetime.datetime.now()
 datetime.datetime(2021, 8, 28, 20, 30, 7, 922670)
