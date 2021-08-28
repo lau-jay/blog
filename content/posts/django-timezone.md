@@ -4,7 +4,7 @@ date = 2021-08-28T19:54:29+08:00
 images = []
 tags = ["timezone", "django"]
 categories = ["Python"]
-draft = False
+draft = false
 
 +++
 
