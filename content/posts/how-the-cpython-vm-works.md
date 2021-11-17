@@ -313,5 +313,5 @@ CPython没有提供类似于`threading`模块的简便方法来创建新的解�
 
 我们没有涉及很多东西。 我们避免深入研究源代码。 初始化和编译阶段完全超出了我们的范围。 相反，我们从虚拟机的概述开始。 我认为，通过这种方式，我们可以更好地了解每个阶段的职责。 现在，我们知道了CPython将源代码编译到的代码对象。
 
-[下一篇](https://tenthousandmeters.com/blog/python-behind-the-scenes-2-how-the-cpython-compiler-works/)，我们将看到它是如何做到的。
+[下一篇](/how-the-cpython-compiler-works)，我们将看到它是如何做到的。
 

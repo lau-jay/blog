@@ -48,7 +48,7 @@ LLVM工具链是该模型成功的一个很好的例子。 有一些C，Rust，S
 
 CPython编译器的两个主要组件是：
 
-1. 前端和
+1. 前端
 2. 后端
 
 前端获取Python代码并生成AST。后端获取AST并生成一个代码对象。在整个CPython源代码中，术语“解析器”和“编译器”分别用于前端和后端。这是编译器一词的另一含义。最好将其称为类似代码对象生成器的名称，但是我们会坚持使用编译器，因为它似乎不会造成太多麻烦。
@@ -76,7 +76,7 @@ S→10S|10
 
 当我们更详细地分析解析器时，我们将继续讨论文法。
 
-### Abstract syntax tree
+### Abstract Syntax Tree
 
 解析器的最终目标是生成AST。AST是一种树形数据结构，用作源代码的高级表示。这是标准ast模块产生的相应[AST](https://docs.python.org/3/library/ast.html)的一段代码和转储的示例
 
@@ -156,7 +156,7 @@ AST表示法的主要受益者之一是编译器， which can walk an AST and em
 
 #### 旧的文法分析器
 
-在很长一段时间里，Python的语法是由生成式文法正式定义的。在很长一段时间里，Python的语法是由生成式文法正式定义的。问题在于，生成式文法并不能直接对应于能够解析这些序列的解析算法。幸运的是，聪明的人已经能够区分出生成文法的类别，并为其建立相应的解析器。这些文法包括[上下文无关](https://en.wikipedia.org/wiki/Context-free_grammar)、[LL(k)](https://en.wikipedia.org/wiki/LL_grammar)、[LR(k)](https://en.wikipedia.org/wiki/LR_parser)、[LALR](https://en.wikipedia.org/wiki/LALR_parser) 和许多其他类型的文法。Python文法是LL(1)。它使用一种扩展的 Backus-Naur 形式 ([EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form)) 来指定。为了了解如何使用它来描述Python的语法，请看一下while语句的规则。
+在很长一段时间里，Python的语法是由生成式文法正式定义的。问题在于，生成式文法并不能直接对应于能够解析这些序列的解析算法。幸运的是，聪明的人已经能够区分出生成文法的类别，并为其建立相应的解析器。这些文法包括[上下文无关](https://en.wikipedia.org/wiki/Context-free_grammar)、[LL(k)](https://en.wikipedia.org/wiki/LL_grammar)、[LR(k)](https://en.wikipedia.org/wiki/LR_parser)、[LALR](https://en.wikipedia.org/wiki/LALR_parser) 和许多其他类型的文法。Python文法是LL(1)。它使用一种扩展的 Backus-Naur 形式 ([EBNF](https://en.wikipedia.org/wiki/Extended_Backus%E2%80%93Naur_form)) 来指定。为了了解如何使用它来描述Python的语法，请看一下while语句的规则。
 
 ```
 file_input: (NEWLINE | stmt)* ENDMARKER
@@ -329,7 +329,7 @@ n = 2 ** 32 # easier to write and to read
 ###  从AST到代码对象
 到目前为止，我们一直在研究CPython是如何从源代码中创建AST的，但正如我们在第一篇文章中看到的，CPython虚拟机对AST一无所知，只能执行一个代码对象。将AST转换为代码对象是编译器的工作。更具体地说，编译器必须返回模块的代码对象，其中包含模块的字节码以及模块中其他代码块的代码对象，如定义的函数和类。
 
-有时候，理解解决问题的最好方法是自己的思考。Let's ponder what we would do if we were the compiler. We start with the root node of an AST that represents a module. Children of this node are statements. Let's assume that the first statement is a simple assignment like `x = 1`. It's represented by the `Assign` AST node: `Assign(targets=[Name(id='x', ctx=Store())], value=Constant(value=1))`. To convert this node to a code object we need to create one, store constant `1` in the list of constants of the code object, store the name of the variable `x` in the list of names used in the code object and emit the `LOAD_CONST` and `STORE_NAME` instructions. We could write a function to do that. But even a simple assignment can be tricky. For example, imagine that the same assignment is made inside the body of a function. If `x` is a local variable, we should emit the `STORE_FAST` instruction. If `x` is a global variable, we should emit the `STORE_GLOBAL` instruction. Finally, if `x` is referenced by a nested function, we should emit the `STORE_DEREF` instruction. The problem is to determine what the type of the variable `x` is. CPython solves this problem by building a symbol table before compiling.
+有时候，理解解决问题的最好方法是自己的思考。让我们思考一下，如果我们是编译器，我们会怎么做？.我们从代表一个模块的AST的根节点开始。该节点的子节点为语句。让我们假设第一条语句是一个简单的赋值，如`x = 1`。它由`Assign`AST节点表示: `Assign(targets=[Name(id='x', ctx=Store())], value=Constant(value=1))`. 为了将这个节点转换为代码对象，我们需要创建一个代码对象，将常量`1`存储在代码对象的常量列表中，将变量`x`的名字存储在代码对象的名称列表中，并发出`LOAD_CONST`和`STORE_NAME`指令。 我们可以写一个函数来做这件事。但即使是一个简单的任务也可能很棘手。 例如，想象一下，在一个函数体内进行同样的赋值。I如果`x`是一个局部变量，我们应该发出`STORE_FAST`指令。 如果`x`是一个全局变量，我们应该发出`STORE_GLOBAL`指令。 最后，如果`x`被一个嵌套函数所引用，我们应该发出`STORE_DEREF`指令。问题是要确定变量`x`的类型是什么。CPython通过在编译前建立一个符号表来解决这个问题。
 
 #### symbol table
 
@@ -675,3 +675,4 @@ Essentially, the peephole optimizer removes redundant instructions, thus making 
 This was a long post, so it's probably a good idea to sum up what we've learned. The architecture of the CPython compiler follows a traditional design. Its two major parts are the frontend and the backend. The frontend is also referred to as the parser. Its job is to convert a source code to an AST. The parser gets tokens from the tokenizer, which is responsible for producing a stream of meaningful language units from the text. Historically, the parsing consisted of several steps, including the generation of a parse tree and the conversion of a parse tree to an AST. In CPython 3.9, the new parser was introduced. It's based on a parsing expression grammar and produces an AST straight away. The backend, also known paradoxically as the compiler, takes an AST and produces a code object. It does this by first building a symbol table and then by creating one more intermediate representation of a program called a control flow graph. The CFG is assembled into a single sequence of instructions, which is then optimized by the peephole optimizer. Eventually, the code object gets created.
 
 At this point, we have enough knowledge to get acquainted with the CPython source code and understand some of the things it does. That's our plan for [the next time](https://tenthousandmeters.com/blog/python-behind-the-scenes-3-stepping-through-the-cpython-source-code/).
+
