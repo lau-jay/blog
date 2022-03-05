@@ -38,7 +38,7 @@ LLVM工具链是该模型成功的一个很好的例子。 有一些C，Rust，S
 
 [图3](/img/diagram3.png)
 
-看起来很相似，不是吗？ 这里的重点是，以前学习过编译器的任何人都应该熟悉CPython编译器的结构。如果没有的话，一本著名的[Dragon Book](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)是对编译器构造理论的出色介绍。 它很长，但是即使只阅读前几章，您也会从中受益。
+看起来很相似，不是吗？ 这里的重点是，以前学习过编译器的任何人都应该熟悉CPython编译器的结构。如果没有的话，一本著名的[龙书](https://en.wikipedia.org/wiki/Compilers:_Principles,_Techniques,_and_Tools)是对编译器构造理论的出色介绍。 它很长，但是即使只阅读前几章，您也会从中受益。
 
 我们进行的比较需要提前解释一些东西。 首先，从3.9版本开始，CPython默认使用一个新的解析器，该解析器立即输出AST（抽象语法树），而无需进行构建解析树的中间步骤。 因此，CPython编译器的模型被进一步简化。 其次，与静态编译器的相应阶段相比，CPython编译器的某些现成阶段做得很少，有人可能会说CPython编译器不过是前端。 我们不会采用hardcore compiler 编写者的这种观点。
 
@@ -331,9 +331,9 @@ n = 2 ** 32 # easier to write and to read
 
 有时候，理解解决问题的最好方法是自己的思考。让我们思考一下，如果我们是编译器，我们会怎么做？.我们从代表一个模块的AST的根节点开始。该节点的子节点为语句。让我们假设第一条语句是一个简单的赋值，如`x = 1`。它由`Assign`AST节点表示: `Assign(targets=[Name(id='x', ctx=Store())], value=Constant(value=1))`. 为了将这个节点转换为代码对象，我们需要创建一个代码对象，将常量`1`存储在代码对象的常量列表中，将变量`x`的名字存储在代码对象的名称列表中，并发出`LOAD_CONST`和`STORE_NAME`指令。 我们可以写一个函数来做这件事。但即使是一个简单的任务也可能很棘手。 例如，想象一下，在一个函数体内进行同样的赋值。I如果`x`是一个局部变量，我们应该发出`STORE_FAST`指令。 如果`x`是一个全局变量，我们应该发出`STORE_GLOBAL`指令。 最后，如果`x`被一个嵌套函数所引用，我们应该发出`STORE_DEREF`指令。问题是要确定变量`x`的类型是什么。CPython通过在编译前建立一个符号表来解决这个问题。
 
-#### symbol table
+#### 符号表
 
-A symbol table contains information about code blocks and the symbols used within them. It's represented by a single `symtable` struct and a collection of `_symtable_entry` structs, one for each code block in a program. A symbol table entry contains the properties of a code block, including its name, its type (module, class or function) and a dictionary that maps the names of variables used within the block to the flags indicating their scope and usage. Here's the complete definition of the `_symtable_entry` struct:
+符号表中包含关于代码块和所使用的符号的信息。它由一个`symtable`结构体和一个`symtable_entry`结构体的集合表示，程序中的每个代码块都有一个。一个符号表项包含了一个代码块的属性，包括它的名字、它的类型（模块、类或函数）和一个字典，它将代码块中使用的变量名称映射到表示其范围和用途的标志上。以下是`_symtable_entry` 结构体的完整定义：
 
 ```c
 typedef struct _symtable_entry {
@@ -369,7 +369,7 @@ typedef struct _symtable_entry {
 } PySTEntryObject;
 ```
 
-CPython uses the term namespace as a synonym for a code block in the context of symbol tables. So, we can say that a symbol table entry is a description of a namespace. The symbol table entries form an hierarchy of all namespaces in a program through the `ste_children` field, which is a list of child namespaces. We can explore this hierarchy using the standard [`symtable`](https://docs.python.org/3/library/symtable.html#module-symtable) module:
+CPython使用术语命名空间作为符号表背景下代码块的同义词。因此，我们可以说，符号表项是对命名空间的描述。符号表项通过`ste_children`字段形成程序中所有命名空间的层次结构，该字段是一个子命名空间的列表。我们可以使用标准库中的[`symtable`](https://docs.python.org/3/library/symtable.html#module-symtable)模块来探索这个层次结构
 
 ```python
 # example3.py
@@ -399,9 +399,9 @@ def func(x):
 (False, True)
 ```
 
-This example shows that every code block has a corresponding symbol table entry. We've accidentally come across the strange `.0` symbol inside the namespace of the list comprehension. This namespace doesn't contain the `range` symbol, which is also strange. This is because a list comprehension is implemented as an anonymous function and `range(10)` is passed to it as an argument. This argument is referred to as `.0`. What else does CPython hide from us?
+这个例子表明，每个代码块都有一个相应的符号表项。我们在列表推导式的命名空间内意外地遇到了奇怪的`.0`符号。这个命名空间并不包含`range`符号，这也很奇怪。这是因为列表推导式被实现为一个匿名函数，`range(10)`被作为一个参数传递给它。这个参数的引用是".0"。CPython还隐藏了什么黑盒？
 
-The symbol table entries are constructed in two passes. During the first pass, CPython walks the AST and creates a symbol table entry for each code block it encounters. It also collects information that can be collected on the spot, such as whether a symbol is defined or used in the block. But some information is hard to deduce during the first pass. Consider the example:
+符号表项是分两次构建的。在第一遍中，CPython遍历AST，为它遇到的每个代码块创建一个符号表项。它也会收集一些可以当场收集的信息，比如一个符号是否在该块中被定义或使用。但有些信息在第一遍时很难推导出来。考虑一下这个例子：
 
 ```python
 def top():
@@ -411,11 +411,11 @@ def top():
     ...
 ```
 
-When constructing a symbol table entry for the `nested()` function, we cannot tell whether `x` is a global variable or a free variable, i.e. defined in the `top()` function, because we haven't seen an assignment yet.
+在为`nested()`函数构建符号表项时，我们无法判断`x`是全局变量还是自由变量，即在`top()`函数中定义，因为我们还没有看到赋值。
 
-CPython solves this problem by doing the second pass. At the start of the second pass it's already known where the symbols are defined and used. The missing information is filled by visiting recursively all the symbol table entries starting from the top. The symbols defined in the enclosing scope are passed down to the nested namespace, and the names of free variables in the enclosed scope are passed back.
+Python通过做第二遍遍历来解决这个问题。在第二遍的开始，我们已经知道了符号的定义和使用。缺少的信息通过从顶部开始递归访问所有的符号表项来填补。在`nested`闭包函数的同层定义的符号被向下传递到`nested`的命名空间，而`nested`闭包函数内的作用域中自由变量的名字被传递回来。
 
-The symbol table entries are managed using the `symtable` struct. It's used both to construct the symbol table entries and to access them during the compilation. Let's take a look at its definition:
+符号表项是用`symtable`结构管理的。它既用来构建符号表项，也用来在编译过程中访问它们。让我们看一下它的定义:
 
 ```c
 struct symtable {
@@ -438,13 +438,13 @@ struct symtable {
 };
 ```
 
-The most important fields to note are `st_stack` and `st_blocks`. The `st_stack` field is a stack of symbol table entries. During the first pass of the symbol table construction, CPython pushes an entry onto the stack when it enters the corresponding code block and pops an entry from the stack when it exits the corresponding code block. The `st_blocks` field is a dictionary that the compiler uses to get a symbol table entry for a given AST node. The `st_cur` and `st_top` fields are also important but their meanings should be obvious.
+要注意的重要字段是`st_stack`和`st_blocks`。`st_stack`字段是一个符号表项的堆栈。在构建符号表的第一遍过程中，CPython在进入相应的代码块时将一个条目推入堆栈，在退出相应的代码块时从堆栈中弹出一个条目。`st_blocks`字段是一个字典，编译器用它来获取一个给定AST节点的符号表条目。`st_cur`和`st_top`字段也很重要，但它们的含义应该是显而易见的。
 
-To learn more about symbol tables and their construction, I highly recommend you [the articles by Eli Bendersky](https://eli.thegreenplace.net/2010/09/18/python-internals-symbol-tables-part-1).
+要了解更多关于符号表及其构造的信息，我强烈推荐你[Eli Bendersky的文章](https://eli.thegreenplace.net/2010/09/18/python-internals-symbol-tables-part-1)
 
-#### basic blocks
+#### 基本块
 
-A symbol table helps us to translate statements involving variables like `x = 1`. But a new problem arises if we try to translate a more complex control-flow statement. Consider another cryptic piece of code:
+符号表可以帮助我们翻译涉及变量的语句，如`x = 1`。但如果我们试图翻译一个更复杂的控制流语句，就会出现新的问题。考虑一下另一段隐晦的代码:
 
 ```python
 if x == 0 or x > 17:
@@ -454,7 +454,7 @@ else:
 ...
 ```
 
-The corresponding AST subtree has the following structure:
+相应的AST子树有如下结构：
 
 ```c
 If(
@@ -464,7 +464,7 @@ If(
 )
 ```
 
-And the compiler translates it to the following bytecode:
+而编译器将其编译成以下字节码:
 
 ```shell
 1           0 LOAD_NAME                0 (x)
@@ -485,23 +485,23 @@ And the compiler translates it to the following bytecode:
 5     >>   26 ...
 ```
 
-The bytecode is linear. The instructions for the `test` node should come first, and the instructions for the `body` block should come before those for the `orelse` block. The problem with the control-flow statements is that they involve jumps, and a jump is often emitted before the instruction it points to. In our example, if the first test succeeds, we would like to jump to the first `body` instruction straight away, but we don't know where it should be yet. If the second test fails, we have to jump over the `body` block to the `orelse` block, but the position of the first `orelse` instruction will become known only after we translate the `body` block.
+该字节码是线性的。`test`节点的指令应该放在最前面，`body`块的指令应该放在`orelse`块的指令前面。控制流语句的问题是它们涉及到跳转，而跳转往往是在它所指向的指令之前发出的。在我们的例子中，如果第一次测试成功，我们想直接跳到第一条`body` 指令，但我们还不知道它应该在哪里。如果第二次测试失败，我们必须跳过`body`块到`orelse`块，但是第一条`orelse`指令的位置只有在我们编译了`body`块之后才会知道。
 
-We could solve this problem if we move the instructions for each block into a separate data structure. Then, instead of specifying jump targets as concrete positions in the bytecode, we point to those data structures. Finally, when all blocks are translated and their sizes are know, we calculate arguments for jumps and assemble the blocks into a single sequence of instructions. And that's what the compiler does.
+如果我们把每个区块的指令移到一个单独的数据结构中，就可以解决这个问题。然后，我们不再把跳转目标指定为字节码中的具体位置，而是指向这些数据结构。最后，当所有的块都被编译出来并且知道它们的大小时，我们就可以计算跳转的参数并将这些块组装成一个单一的指令序列。这就是编译器所做的。
 
-The blocks we're talking about are called basic blocks. They are not specific to CPython, though CPython's notion of a basic block differs from the conventional definition. According to the Dragon book, a basic block is a maximal sequence of instructions such that:
+我们正在谈论的块被称为基本块。它们不是CPython所特有的，尽管CPython的基本块概念与传统的定义不同。根据龙书的定义，一个基本块是一个最大的指令序列，应该如下:
 
-1. control may enter only the first instruction of the block; and
-2. control will leave the block without halting or branching, except possibly at the last instruction.
+​	1.控制只能进入该块的第一条指令；以及
+​    2.控制在离开该块时没有停止或分支，可能在最后一条指令时除外。
 
-CPython drops the second requirement. In other words, no instruction of a basic block except the first can be a target of a jump, but a basic block itself can contain jump instructions. To translate the AST from our example, the compiler creates four basic blocks:
+CPython放弃了第二个。换句话说，除了第一条指令，基本块中的任何指令都不能成为跳转的目标，但基本块本身可以包含跳转指令。为了编译我们例子中的AST，编译器创建了四个基本块:
 
-1. instructions 0-14 for `test`
-2. instructions 16-20 for `body`
-3. instructions 22-24 for `orelse`; and
-4. instructions 26-... for whatever comes after the if statement.
+1. 指令 0-14 对应 `test`
+2. 指令 16-20 对应 `body`
+3. 指令 22-24 对应 `orelse`; 最后
+4. 指令 26-... 为if语句之后的任何内容
 
-A basic block is represented by the `basicblock_` struct that is defined as follows:
+一个基本块由 `basicblock_`结构表示，其定义如下:
 
 ```c
 typedef struct basicblock_ {
@@ -529,7 +529,7 @@ typedef struct basicblock_ {
 } basicblock;
 ```
 
-And here's the definition of the `instr` struct:
+下面是 `instr `结构的定义:
 
 ```c
 struct instr {
