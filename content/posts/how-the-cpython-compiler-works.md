@@ -542,11 +542,11 @@ struct instr {
 };
 ```
 
-We can see that the basic blocks are connected not only by jump instructions but also through the `b_list` and `b_next` fields. The compiler uses `b_list` to access all allocated blocks, for example, to free the memory. The `b_next` field is of more interest to us right now. As the comment says, it points to the next block reached by the normal control flow, which means that it can be used to assemble blocks in the right order. Returning to our example once more, the `test` block points to the `body` block, the `body` block points to the `orelse` block and the `orelse` block points to the block after the if statement. Because basic blocks point to each other, they form a graph called a [Control Flow Graph](https://en.wikipedia.org/wiki/Control-flow_graph) (CFG).
+我们可以看到，基本块不仅通过跳转指令连接，而且还通过`b_list`和`b_next`字段连接。编译器使用`b_list`来访问所有分配的块，例如，释放内存。`b_next`字段是我们现在更感兴趣的。正如注释所说，它指向正常控制流到达的下一个块，这意味着它可以被用来以正确的顺序组装块。再次回到我们的例子，`test`块指向`body`块，`body`块指向`orelse`块，`orelse`块指向if语句之后的块。由于基本块相互指向，它们形成一个图，称为[控制流图](https://en.wikipedia.org/wiki/Control-flow_graph)(CFG)
 
 #### frame blocks
 
-There is one more problem to solve: how to understand where to jump to when compiling statements like `continue` and `break`? The compiler solves this problem by introducing yet another type of block called frame block. There are different kinds of frame blocks. The `WHILE_LOOP` frame block, for example, points to two basic blocks: the `body` block and the block after the while statement. These basic blocks are used when compiling the `continue` and `break` statements respectively. Since frame blocks can nest, the compiler keeps track of them using stacks, one stack of frame blocks per code block. Frame blocks are also useful when dealing with statements such as `try-except-finally`, but we will not dwell on this now. Let's instead have a look at the definition of the `fblockinfo` struct:
+还有一个问题需要解决：在编译 "continue "和 "break "等语句时，如何理解跳转到哪里？编译器通过引入另一种类型的块，即frame块来解决这个问题。有不同种类的frame块。例如，`WHILE_LOOP` frame块指向两个基本块：`body`块和while语句后的块。这些基本块分别在编译`continue`和`break`语句时使用。由于frame块可以嵌套，编译器使用堆栈对其进行跟踪，每个代码块有一个frame块堆栈。在处理`try-except-finally`等语句时，frame块也很有用，但我们现在不会纠缠于此。让我们来看看 `fblockinfo ` 结构的定义。
 
 ```c
 enum fblocktype { WHILE_LOOP, FOR_LOOP, EXCEPT, FINALLY_TRY, FINALLY_END,
@@ -562,16 +562,16 @@ struct fblockinfo {
 };
 ```
 
-We've identified three important problems and we've seen how the compiler solves them. Now, let's put everything together to see how the compiler works from the beginning to the end.
+我们已经揭示了三个重要的问题，我们也看到了编译器是如何解决这些问题的。现在，让我们把所有东西放在一起，看看编译器是如何从头到尾工作的。
 
-#### compiler units, compiler and assembler
+#### 编译单元、编译器和汇编器
 
-As we've already figured out, after building a symbol table, the compiler performs two more steps to convert an AST to a code object:
+正如我们已经发现的，在建立符号表之后，编译器还要执行两个步骤，将AST转换为代码对象:
 
-1. it creates a CFG of basic blocks; and
-2. it assembles a CFG into a code object.
+1. 它创建了一个基本块的CFG；以及
+2. 它将一个CFG汇编成一个代码对象
 
-This two-step process is performed for each code block in a program. The compiler starts by building the module's CFG and ends by assembling the module's CFG into the module's code object. In between, it walks the AST by recursively calling the `compiler_visit_*` and `compiler_*` functions, where `*` denotes what is visited or compiled. For example, `compiler_visit_stmt` delegates the compilation of a given statement to the appropriate `compiler_*` function, and the `compiler_if` function knows how to compile the `If` AST node. If a node introduces new basic blocks, the compiler creates them. If a node begins a code block, the compiler creates a new compilation unit and enters it. A compilation unit is a data structure that captures the compilation state of the code block. It acts as a mutable prototype of the code object and points to a new CFG. The compiler assembles this CFG when it exits a node that began the current code block. The assembled code object is stored in the parent compilation unit. As always, I encourage you to look at the struct definition:
+这个两步过程是针对程序中的每个代码块进行的。编译器从建立模块的CFG开始，最后将模块的CFG汇编成模块的代码对象。在这之间，它通过递归调用`compiler_visit_*`和`compiler_*`函数来遍历AST，其中`*`表示被访问或编译的内容。例如，`compiler_visit_stmt`将给定语句的编译委托给适当的`compiler_*`函数，而`compiler_if`函数知道如何编译`If`AST节点。如果一个节点引入了新的基本块，编译器会创建它们。如果一个节点开始了一个代码块，编译器会创建一个新的编译单元并进入该单元。编译单元是一个数据结构，它捕获了代码块的编译状态。它作为代码对象的一个可变的原型，并指向一个新的CFG。编译器在退出开始当前代码块的节点时，会汇编这个CFG。汇编后的代码对象被保存在父编译单元中。像往常一样，我鼓励你看一下结构定义:
 
 ```c
 struct compiler_unit {
