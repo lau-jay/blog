@@ -609,7 +609,7 @@ struct compiler_unit {
     int u_col_offset;      /* the offset of the current stmt */
 };
 ```
-Another data structure that is crucial for the compilation is the `compiler` struct, which represents the global state of the compilation. Here's its definition:
+另一个对编译至关重要的数据结构是 `compiler`结构，它表示编译的全局状态。下面是它的定义:
 
 ```C
 struct compiler {
@@ -635,9 +635,9 @@ struct compiler {
 };
 ```
 
-And the comment preceding the definition that explains what the two most important fields are for:
+而定义前面的注释解释了两个最重要的字段是什么，是为了什么:
 
-> The u pointer points to the current compilation unit, while units for enclosing blocks are stored in c_stack. The u and c_stack are managed by compiler_enter_scope() and compiler_exit_scope().
+> u指针指向当前的编译单元，而enclosing的单元则存储在c_stack中。u和c_stack由compiler_enter_scope()和compiler_exit_scope()管理。
 
 To assemble basic blocks into a code object, the compiler first has to fix the jump instructions by replacing pointers with positions in bytecode. On the one side, it's an easy task, since the sizes of all basic blocks are known. On the other side, the size of a basic block can change when we fix a jump. The current solution is to keep fixing jumps in a loop while the sizes change. Here's an honest comment from the source code on this solution:
 
