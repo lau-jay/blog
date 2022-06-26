@@ -1,6 +1,6 @@
 +++
 title = "Python的幕后#2: CPython 编译器是如何工作的"
-date = 2021-01-02T20:32:50+08:00
+date = 2022-06-26T20:32:50+08:00
 images = []
 tags = []
 categories = []
@@ -639,11 +639,15 @@ struct compiler {
 
 > u指针指向当前的编译单元，而enclosing的单元则存储在c_stack中。u和c_stack由compiler_enter_scope()和compiler_exit_scope()管理。
 
-To assemble basic blocks into a code object, the compiler first has to fix the jump instructions by replacing pointers with positions in bytecode. On the one side, it's an easy task, since the sizes of all basic blocks are known. On the other side, the size of a basic block can change when we fix a jump. The current solution is to keep fixing jumps in a loop while the sizes change. Here's an honest comment from the source code on this solution:
+为了将基本块组装成一个代码对象，编译器首先要通过将指针替换成字节码
+中的位置来修复跳转指令。一方面，这是一个简单的任务，因为所有的基本块的大小
+是已知的。另外一方面，当我们修复一个跳转的时候，基本块的大小可能会发生变化。目前
+的解决方案是，在大小发生变化的时候，在一个循环中不断修复跳转。下面是源代码中对这个
+解决方案的一个注释：
 
-> This is an awful hack that could hurt performance, but on the bright side it should work until we come up with a better solution.
+> 这是一个可怕的hack，可能会损失性能，但是从好的方面看，在我们想出更好的解决方案前，他是可以工作的。
 
-The rest is straightforward. The compiler iterates over basic blocks and emits the instructions. The progress is kept in the `assembler` struct:
+剩下的就很简单了。编译器对基本块进行迭代并发出指令。进展被保存在 `assembler` 的结构中:
 
 ```c
 struct assembler {
@@ -657,22 +661,22 @@ struct assembler {
     int a_lineno_off;      /* bytecode offset of last lineno */
 };
 ```
-
-At this point, the current compilation unit and the assembler contain all the data needed to create a code object. Congratulations! We've done it! Almost.
+在这一点上，当前的编译单元和汇编器包含了创建一个代码对象所需的所有数据。祝贺你! 我们几乎完成了!
 
 #### peephole optimizer
 
-The last step in the creation of the code object is to optimize the bytecode. This is a job of the peephole optimizer. Here's some types of optimizations it performs:
+创建代码对象的最后一步是优化字节码。这是peephole optimizer的工作。
+下面是它所执行的一些优化类型:
 
-- The statements like `if True: ...` and `while True: ...` generate a sequence of `LOAD_CONST trueconst` and `POP_JUMP_IF_FALSE` instructions. The peephole optimizer eliminates such instructions.
-- The statements like `a, = b,` lead to the bytecode that builds a tuple and then unpacks it. The peephole optimizer replaces it with a simple assignment.
-- The peephole optimizer removes unreachable instructions after `RETURN`.
+- 像语句 `if True: ...` 和 `while True: ...` 生成一个由 `LOAD_CONST trueconst` 和 `POP_JUMP_IF_FALSE` 指令组成的序列。 peephole optimizer 消除了这种指令。
+- 像语句 `a, = b,` 会构建元组的字节码，然后解包它。peephole optimizer用一个简单的赋值来取代它。
+- peephole optimizer会删除 `RETURN` 之后永远不会执行的指令。
 
-Essentially, the peephole optimizer removes redundant instructions, thus making bytecode more compact. After the bytecode is optimized, the compiler creates the code object, and the VM is ready to execute it.
+本质上，peephole optimizer删除了多余的指令，从而使字节码更加紧凑。在字节码被优化后，编译器创建了代码对象，而虚拟机则准备执行它。
 
 ### Summary
 
-This was a long post, so it's probably a good idea to sum up what we've learned. The architecture of the CPython compiler follows a traditional design. Its two major parts are the frontend and the backend. The frontend is also referred to as the parser. Its job is to convert a source code to an AST. The parser gets tokens from the tokenizer, which is responsible for producing a stream of meaningful language units from the text. Historically, the parsing consisted of several steps, including the generation of a parse tree and the conversion of a parse tree to an AST. In CPython 3.9, the new parser was introduced. It's based on a parsing expression grammar and produces an AST straight away. The backend, also known paradoxically as the compiler, takes an AST and produces a code object. It does this by first building a symbol table and then by creating one more intermediate representation of a program called a control flow graph. The CFG is assembled into a single sequence of instructions, which is then optimized by the peephole optimizer. Eventually, the code object gets created.
+这是一篇很长的文章，所以总结一下我们所学到的东西也许是个好主意。CPython编译器的架构遵循传统设计。它的两个主要部分是前端和后端。前端也被称为解析器。它的工作是将源代码转换为AST。解析器从标记器中获得标记，标记器负责从文本中产生有意义的语言单元流。历史上，解析由几个步骤组成，包括生成解析树和将解析树转换为AST。在CPython 3.9中，新的解析器被引入。它基于一个解析表达式的语法，并直接产生一个AST。后端，自相矛盾地称为编译器，接受AST并产生一个代码对象。它通过首先建立一个符号表，然后创建一个称为控制流图的程序的中间表示法来做到这一点。CFG被组装成一个单一的指令序列，然后由peephole optimizer进行优化。最终，代码对象被创建。
 
-At this point, we have enough knowledge to get acquainted with the CPython source code and understand some of the things it does. That's our plan for [the next time](https://tenthousandmeters.com/blog/python-behind-the-scenes-3-stepping-through-the-cpython-source-code/).
+在这一点上，我们有足够的知识来熟悉CPython源代码，并了解它的一些工作。这是我们为[下一篇](https://tenthousandmeters.com/blog/python-behind-the-scenes-3-stepping-through-the-cpython-source-code/)制定的计划.
 
