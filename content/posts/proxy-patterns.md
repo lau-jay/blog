@@ -32,7 +32,7 @@ draft = false
 为了升级，你的逻辑合约的一个新版本被部署，代理内保存的逻辑合约地址被更新以引用新的合约。
 逻辑合约
 
-[proxy-intro](/img/proxy-intro.svg)
+![proxy-intro](/img/proxy-intro.svg)
 
 Zeppelin一直在研究几种代理模式，作为他们实现zeppelin_os工作的一部分。探讨的三种方案是:
 
@@ -107,7 +107,7 @@ returndatacopy(ptr, 0, size)
 
 最后，switch语句要么返回返回的数据，要么在出错时抛出一个异常。
 
-[proxy-data-flow](/img/proxy-data-flow.svg)
+![proxy-data-flow](/img/proxy-data-flow.svg)
 
 很好，我们现在有办法从逻辑合同中检索到适当的结果值。
 
@@ -126,7 +126,7 @@ Zeppelin的三种方法提出了不同的方法来架构你的系统，使你的
 在探索这种方法的时候，我们尝试了由一个注册表合约来跟踪你的逻辑合约的不同版本的想法。为了升级到一个新的逻辑合约，你需要在注册表中把它注册为一个新的版本，并要求代理升级到它。请注意，拥有一个注册表并不影响存储机制；事实上，它可以用本帖中显示的任何一种存储模式来实现。
 
 
-[inherited Storage](/img/inherited-storage.png)
+![inherited Storage](/img/inherited-storage.png)
 
 ### 如何初始化
 
@@ -154,7 +154,7 @@ Zeppelin的三种方法提出了不同的方法来架构你的系统，使你的
 
 Zeppelin lab的代码库中提供的这个实现也引入了代理所有权的概念。代理所有者是唯一能够升级代理以指向新的逻辑合约的地址，也是唯一能够转移所有权的地址。
 
-[eternal proxy](/img/eternal-proxy.png)
+![eternal proxy](/img/eternal-proxy.png)
 
 ### 如何初始化
 
@@ -190,7 +190,7 @@ keccak256("org.zeppelinos.proxy.implementation");
 
 Zeppelin lab的代码库中提供的这个实现也引入了代理所有权的概念。代理所有者是唯一能够升级代理以指向新的逻辑合约的地址，也是唯一能够转移所有权的地址。
 
-[unstructured proxy](/img/unstructured-proxy.png)
+![unstructured proxy](/img/unstructured-proxy.png)
 
 ### 如何初始化
 
