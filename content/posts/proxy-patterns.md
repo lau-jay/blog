@@ -4,7 +4,7 @@ date = 2022-12-11T10:00:17+08:00
 images = []
 tags = ["EVM","Contract"]
 categories = ["solidity"]
-draft = true
+draft = false
 +++
 
 > [Proxy Patterns](https://blog.openzeppelin.com/proxy-patterns/)
@@ -68,7 +68,7 @@ Zeppelin一直在研究几种代理模式，作为他们实现zeppelin_os工作�
 为了委托调用另一个solidity合约函数，我们必须把代理收到的msg.data传递给它。
 由于msg.data是字节类型的，是一个动态的数据结构，它有一个变化的大小，存储在msg.data的第一个字（32 bytes）。
 如果我们想只提取实际的数据，我们需要跨过第一个字的大小，从msg.data的`0x20` （32 bytes）开始。
-然而，我们将利用两个操作码来代替这个操作。我们将使用`calldatasize` 来获取msg.data的大小，并使用`calldatacopy` 将其复制到我们的ptr变量。
+然而，我们将利用两个操作码来代替这个操作。我们将使用`calldatasize` 来获取msg.data的大小，并使用`calldatacopy` 将其复制到我们的`ptr` 变量。
 
 注意我们是如何初始化我们的ptr变量的。在Solidity中，位于`0x40` 位置的内存槽是特殊的，因为它包含了下一个可用的自由内存指针的值。
 每次你直接保存一个变量到内存，你应该通过检查 `0x40` 的值来咨询你应该把它保存到哪里。现在我们知道了允许我们保存变量的位置，
@@ -123,9 +123,87 @@ Zeppelin的三种方法提出了不同的方法来架构你的系统，使你的
 ## 使用继承存储（Inherited Storage）升级
 [继承存储](https://github.com/OpenZeppelin/openzeppelin-labs/tree/master/upgradeability_using_inherited_storage)的方法依赖于使逻辑合约包含代理所需的存储结构。代理和逻辑合约都继承了相同的存储结构，以确保两者都坚持存储必要的代理状态变量。
 
+在探索这种方法的时候，我们尝试了由一个注册表合约来跟踪你的逻辑合约的不同版本的想法。为了升级到一个新的逻辑合约，你需要在注册表中把它注册为一个新的版本，并要求代理升级到它。请注意，拥有一个注册表并不影响存储机制；事实上，它可以用本帖中显示的任何一种存储模式来实现。
 
 
+[inherited Storage](/img/inherited-storage.png)
+
+### 如何初始化
+
+1. 部署Registry合约
+2. 部署你的合约的初始版本（v1）。确保它继承了可升级合约
+3. 将你的初始版本的地址注册到`Registry`
+4. 要求 `Registry` 合约创建一个 `UpgradeabilityProxy` 实例
+5. 调用你的 `UpgradeabilityProxy` 以升级到合约的初始版本
+
+### 如何升级
+
+1. 部署一个新版本的合约（v2），它继承了你的初始版本，以确保它保持代理的存储结构和初始版本的合约中的存储结构。
+2. 将你的新版合同注册到 `Registry`
+3. 调用你的 `UpgradeabilityProxy` 以升级到合约的新注册版本
+ 
+
+### 总结
+我们可以在未来部署的逻辑合约中引入升级的函数以及新的函数和新的状态变量，方法是仍然调用相同的 `UpgradeabilityProxy` 合约
 
 
 ## 使用永恒存储（Eternal Storage）升级
+在[永恒存储](https://github.com/OpenZeppelin/openzeppelin-labs/tree/master/upgradeability_using_eternal_storage) 模式中，存储模式被定义在一个单独的合约中，代理和逻辑合约都继承于此。存储合约持有逻辑合约需要的所有状态变量，
+由于代理也知道这些变量，所以它可以定义自己的可升级性所需的状态变量，而不用担心它们被覆盖。
+请注意，所有未来版本的逻辑合同不应该定义任何其他的状态变量。所有版本的逻辑合约必须始终使用一开始定义的永恒的存储结构。
+
+Zeppelin lab的代码库中提供的这个实现也引入了代理所有权的概念。代理所有者是唯一能够升级代理以指向新的逻辑合约的地址，也是唯一能够转移所有权的地址。
+
+[eternal proxy](/img/eternal-proxy.png)
+
+### 如何初始化
+
+1. 部署 `EternalStorageProxy`
+2. 部署合约的初始版本 (v1)
+3. 调用你的 `EternalStorageProxy` 实例来升级到你的初始版本的地址
+4. 如果你的逻辑合约依赖它的构造函数来设置一些初始状态，那就必须在它链接到代理后重做，因为代理的存储不知道这些值。`EternalStorageProxy有` 一个函数 `upgradeToAndCall`，专门用来调用你的逻辑合约上的一些函数，在代理升级到它之后重新进行设置。
+
+### 如何升级
+
+1. 部署一个新版本的合约(v2)， 确保它拥有永恒的存储结构。
+2. 调用你的`EternalStorageProxy` 实例来升级到新版本。
+
+### 总结
+
+直观的方法，对代币逻辑合约没有明显的开销。未来的逻辑接触可以升级现有的方法和引入新的方法，但不应该引入新的状态变量。
+
 ## 使用非结构化存储（Unstructured Storage）升级
+
+[非结构化存储模式](https://github.com/OpenZeppelin/openzeppelin-labs/tree/master/upgradeability_using_unstructured_storage) 与继承性存储相似，但不要求逻辑契约继承任何与可升级性相关的状态变量。这种模式使用代理合同中定义的非结构化存储槽来保存可升级性所需的数据。
+
+在代理合约中，我们定义了一个常量变量，当哈希运算时，应该给出一个足够随机的存储位置来存储代理应该调用的逻辑合同的地址。
+
+```
+bytes32 private constant implementationPosition = 
+keccak256("org.zeppelinos.proxy.implementation");
+```
+
+由于[常量状态变量](http://solidity.readthedocs.io/en/v0.4.21/miscellaneous.html#modifiers) 不占用存储槽，所以不存在实现位置被逻辑合约意外覆盖的问题。
+由于Solidity它的[状态变量](http://solidity.readthedocs.io/en/v0.4.21/miscellaneous.html#layout-of-state-variables-in-storage)存储中的布局方式，这个存储槽被逻辑合约中定义的其他东西使用的碰撞机会极少。
+
+通过使用这种模式，没有一个逻辑合约版本必须知道代理的存储结构，然而所有未来的逻辑合约必须继承其祖先版本所声明的存储变量。就像在继承存储模式中，未来升级的代币逻辑合约可以升级现有的功能，也可以引入新的功能和新的存储变量。
+
+Zeppelin lab的代码库中提供的这个实现也引入了代理所有权的概念。代理所有者是唯一能够升级代理以指向新的逻辑合约的地址，也是唯一能够转移所有权的地址。
+
+[unstructured proxy](/img/unstructured-proxy.png)
+
+### 如何初始化
+
+1. 部署 `OwnedUpgradeabilityProxy`实例
+2. 部署合约的初始版本 (v1)
+3. 调用你的 `OwnedUpgradeabilityProxy` 实例来升级到你的初始版本的地址
+4. 如果你的逻辑合约依赖它的构造函数来设置一些初始状态，那就必须在它链接到代理后重做，因为代理的存储不知道这些值。`OwnedUpgradeabilityProxy` 有一个函数 `upgradeToAndCall`，专门用来调用你的逻辑合约上的一些函数，在代理升级到它之后重新进行设置。
+
+### 如何升级
+
+1. 部署一个新版本的合约(v2)， 确保它继承了以前版本中使用的状态变量结构。
+2. 调用你的`OwnedUpgradeabilityProxy` 实例来升级到新版本。
+
+### 总结
+
+这种方法很好，因为它不需要Token逻辑合约意识到它是代理合约系统的一部分。
