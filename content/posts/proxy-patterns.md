@@ -12,7 +12,7 @@ draft = false
 > 思想可以参考实现可以略过
 
 
-以太坊最大的优势之一是，每一笔移动资金的交易，每一份部署的合同，以及对合同进行的每一笔交易，在我们称为区块链的公共账本上都是不可改变的。
+以太坊最大的优势之一是，每一笔移动资金的交易，每一份部署的合约，以及对合约进行的每一笔交易，在我们称为区块链的公共账本上都是不可改变的。
 没有办法隐藏或修改任何曾经的交易。巨大的好处是，以太坊网络上的任何节点都可以验证每笔交易的有效性和状态，使以太坊成为非常强大鲁棒的去中心化系统。
 
 
@@ -139,7 +139,7 @@ Zeppelin的三种方法提出了不同的方法来架构你的系统，使你的
 ### 如何升级
 
 1. 部署一个新版本的合约（v2），它继承了你的初始版本，以确保它保持代理的存储结构和初始版本的合约中的存储结构。
-2. 将你的新版合同注册到 `Registry`
+2. 将你的新版合约注册到 `Registry`
 3. 调用你的 `UpgradeabilityProxy` 以升级到合约的新注册版本
  
 
@@ -150,7 +150,7 @@ Zeppelin的三种方法提出了不同的方法来架构你的系统，使你的
 ## 使用永恒存储（Eternal Storage）升级
 在[永恒存储](https://github.com/OpenZeppelin/openzeppelin-labs/tree/master/upgradeability_using_eternal_storage) 模式中，存储模式被定义在一个单独的合约中，代理和逻辑合约都继承于此。存储合约持有逻辑合约需要的所有状态变量，
 由于代理也知道这些变量，所以它可以定义自己的可升级性所需的状态变量，而不用担心它们被覆盖。
-请注意，所有未来版本的逻辑合同不应该定义任何其他的状态变量。所有版本的逻辑合约必须始终使用一开始定义的永恒的存储结构。
+请注意，所有未来版本的逻辑合约不应该定义任何其他的状态变量。所有版本的逻辑合约必须始终使用一开始定义的永恒的存储结构。
 
 Zeppelin lab的代码库中提供的这个实现也引入了代理所有权的概念。代理所有者是唯一能够升级代理以指向新的逻辑合约的地址，也是唯一能够转移所有权的地址。
 
@@ -174,9 +174,9 @@ Zeppelin lab的代码库中提供的这个实现也引入了代理所有权的�
 
 ## 使用非结构化存储（Unstructured Storage）升级
 
-[非结构化存储模式](https://github.com/OpenZeppelin/openzeppelin-labs/tree/master/upgradeability_using_unstructured_storage) 与继承性存储相似，但不要求逻辑契约继承任何与可升级性相关的状态变量。这种模式使用代理合同中定义的非结构化存储槽来保存可升级性所需的数据。
+[非结构化存储模式](https://github.com/OpenZeppelin/openzeppelin-labs/tree/master/upgradeability_using_unstructured_storage) 与继承性存储相似，但不要求逻辑契约继承任何与可升级性相关的状态变量。这种模式使用代理合约中定义的非结构化存储槽来保存可升级性所需的数据。
 
-在代理合约中，我们定义了一个常量变量，当哈希运算时，应该给出一个足够随机的存储位置来存储代理应该调用的逻辑合同的地址。
+在代理合约中，我们定义了一个常量变量，当哈希运算时，应该给出一个足够随机的存储位置来存储代理应该调用的逻辑合约的地址。
 
 ```
 bytes32 private constant implementationPosition = 
@@ -184,7 +184,7 @@ keccak256("org.zeppelinos.proxy.implementation");
 ```
 
 由于[常量状态变量](http://solidity.readthedocs.io/en/v0.4.21/miscellaneous.html#modifiers) 不占用存储槽，所以不存在实现位置被逻辑合约意外覆盖的问题。
-由于Solidity它的[状态变量](http://solidity.readthedocs.io/en/v0.4.21/miscellaneous.html#layout-of-state-variables-in-storage)存储中的布局方式，这个存储槽被逻辑合约中定义的其他东西使用的碰撞机会极少。
+由于Solidity它的[状态变量](http://solidity.readthedocs.io/en/v0.4.21/miscellaneous.html#layout-of-state-variables-in-storage)存储中的布局方式，这个存储合约槽被逻辑合约中定义的其他东西使用的碰撞机会极少。
 
 通过使用这种模式，没有一个逻辑合约版本必须知道代理的存储结构，然而所有未来的逻辑合约必须继承其祖先版本所声明的存储变量。就像在继承存储模式中，未来升级的代币逻辑合约可以升级现有的功能，也可以引入新的功能和新的存储变量。
 
