@@ -6,7 +6,7 @@ tags = ["profile"]
 draft = false
 +++
 
-Hello, I'am Jay, Coder.
+Hello, I'm Jay, Coder.
 Python fans, Elixir Beginner.
 Passion lies in solve and ask question.
 I have a Corgi.
