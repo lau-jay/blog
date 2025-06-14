@@ -16,9 +16,13 @@ jobs:
         uses: peaceiris/actions-hugo@v2
         with:
           hugo-version: "0.128.0" # 指定你的 Hugo 版本
-        env:
-          DEPLOY_REPO: lau-jay/lau-jay.github.io
-          DEPLOY_BRANCH: master
-          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-          # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+
+      - name: "Build"
+        run: hugo --minify
+
+      - name: "Deploy"
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          deploy_key: ${{ secrets.DEPLOY_KEY }} # 需提前配置 SSH Deploy Key
+          external_repository: lau-jay/lau-jay.github.io # 目标仓库
           TZ: Asia/Shanghai
