@@ -5,19 +5,20 @@ name: build
 on:
   push:
     branches:
-    - master
+      - master
 
 jobs:
   build:
     runs-on: ubuntu-latest
 
     steps:
-    - name: 'Building...'
-      uses: reuixiy/hugo-deploy@v1
-      env:
-        DEPLOY_REPO: lau-jay/lau-jay.github.io
-        DEPLOY_BRANCH: master 
-        DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
-        # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
-        TZ: Asia/Shanghai
-
+      - name: "Building..."
+        uses: peaceiris/actions-hugo@v2
+        with:
+          hugo-version: "0.128.0" # 指定你的 Hugo 版本
+        env:
+          DEPLOY_REPO: lau-jay/lau-jay.github.io
+          DEPLOY_BRANCH: master
+          DEPLOY_KEY: ${{ secrets.DEPLOY_KEY }}
+          # https://en.wikipedia.org/wiki/List_of_tz_database_time_zones
+          TZ: Asia/Shanghai

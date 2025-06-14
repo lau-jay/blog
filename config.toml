@@ -5,7 +5,7 @@ canonifyurls = true
 ignoreLogs = ['warning-goldmark-raw-html']
 
 theme = "hugo-kiera"
-copyright = "Copyright &copy; 2016 ~ 2023 - Jay Lau|Theme by [kiera](https://github.com/funkydan2/hugo-kiera)"
+copyright = "Copyright &copy; 2016 ~ 2025 - Jay Lau|Theme by [kiera](https://github.com/funkydan2/hugo-kiera)"
 
 paginate = 10
 
@@ -14,7 +14,7 @@ enableEmoji = true
 pygmentsCodeFences = true
 
 
-
+disqusShortname = "lau-jay"
 [services.disqus]
   shortname = "lau-jay"
 
