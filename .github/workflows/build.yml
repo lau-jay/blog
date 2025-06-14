@@ -18,7 +18,11 @@ jobs:
           hugo-version: "0.128.0" # 指定你的 Hugo 版本
 
       - name: "Build"
-        run: hugo --minify
+        run: |
+          # 打印目录结构确认文件存在（调试用）
+          ls -la
+          # 执行构建
+          hugo --minify
 
       - name: "Deploy"
         uses: peaceiris/actions-gh-pages@v3
