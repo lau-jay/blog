@@ -2,8 +2,7 @@
 title: "在Airflow中使用BashOperator的环境变量问题"
 date: 2025-05-28T23:12:49+08:00
 draft: false
-tags: ["Airflow", "NodeJS", "BashOperator", "环境变量"]
-categories: ["技术解决方案"]
+tags: ["Airflow", "NodeJS", "BashOperator", "env"]
 ---
 
 ## 背景
