@@ -2,6 +2,7 @@ baseURL = "https://laujay.com/"
 languageCode = "zh-CN"
 title = "世界的过客"
 canonifyurls = true
+ignoreLogs = ['warning-goldmark-raw-html']
 
 theme = "hugo-kiera"
 copyright = "Copyright &copy; 2016 ~ 2023 - Jay Lau|Theme by [kiera](https://github.com/funkydan2/hugo-kiera)"
@@ -12,14 +13,20 @@ summaryLength = 3
 enableEmoji = true
 pygmentsCodeFences = true
 
-disqusShortname = "lau-jay"
-googleAnalytics = "UA-91611718-2"
+
+
+[services.disqus]
+  shortname = "lau-jay"
+
+[services.googleAnalytics]
+    ID = "UA-91611718-2"
 
 [author]
   name = "Jay Lau"
   github = "lau-jay"
 
 [params]
+  author = "Jay Lau"
   tagline = "每个人获得的东西都恰好是他值得获得的东西"
   customCSS = []
   favicon = "/img/favicon.ico"
@@ -45,4 +52,3 @@ googleAnalytics = "UA-91611718-2"
   name = "About"
   url = "/about"
   weight = 1
-
